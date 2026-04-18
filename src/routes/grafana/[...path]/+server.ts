@@ -1,13 +1,18 @@
 import { error, redirect } from '@sveltejs/kit';
 import { getRoutes } from '$lib/monitor.config';
+import { log } from '$lib/server/audit';
 import type { RequestHandler } from '@sveltejs/kit';
 
 function createProxyHandler(routeId: string): RequestHandler {
-	return async ({ params, request, locals }) => {
+	return async ({ params, request, locals, getClientAddress }) => {
 		if (!locals.user) redirect(302, '/login');
 
 		const route = getRoutes().find((r) => r.id === routeId);
 		if (!route) error(404, 'Route not configured');
+
+		if (request.method === 'GET' && !params.path) {
+			await log('access', route.id, locals.user.id, getClientAddress());
+		}
 
 		const path = params.path ?? '';
 		const url = new URL(request.url);

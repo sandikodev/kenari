@@ -6,6 +6,7 @@ import { getDb } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateId } from 'lucia';
+import { log } from '$lib/server/audit';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
@@ -71,5 +72,6 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	cookies.set(cookie.name, cookie.value, { path: '/', ...cookie.attributes });
 	cookies.delete('github_oauth_state', { path: '/' });
 
+	await log('login', 'github oauth', user.id);
 	redirect(302, '/');
 };

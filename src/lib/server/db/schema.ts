@@ -15,3 +15,12 @@ export const sessions = sqliteTable('sessions', {
 	userId: text('user_id').notNull().references(() => users.id),
 	expiresAt: integer('expires_at').notNull()
 });
+
+export const auditLog = sqliteTable('audit_log', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	userId: text('user_id').references(() => users.id),
+	action: text('action').notNull(), // 'login' | 'logout' | 'access' | 'admin'
+	detail: text('detail'),
+	ip: text('ip'),
+	createdAt: integer('created_at').notNull()
+});

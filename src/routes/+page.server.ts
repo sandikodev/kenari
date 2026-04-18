@@ -6,16 +6,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) redirect(302, '/login');
 
 	const routes = getRoutes();
+	const health: Record<string, { online: boolean; latency: number }> = {};
 
-	// Health check — ping each upstream
-	const health: Record<string, boolean> = {};
 	await Promise.all(
 		routes.map(async (route) => {
+			const start = Date.now();
 			try {
 				const res = await fetch(route.upstreamUrl, { signal: AbortSignal.timeout(3000) });
-				health[route.id] = res.ok || res.status < 500;
+				health[route.id] = { online: res.ok || res.status < 500, latency: Date.now() - start };
 			} catch {
-				health[route.id] = false;
+				health[route.id] = { online: false, latency: Date.now() - start };
 			}
 		})
 	);
