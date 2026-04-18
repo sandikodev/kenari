@@ -6,15 +6,18 @@ pub fn run() -> anyhow::Result<()> {
     let bin_path = bin.to_string_lossy();
 
     match init::detect() {
-        InitSystem::Systemd => install_systemd(&bin_path),
-        InitSystem::OpenRC  => install_openrc(&bin_path),
-        InitSystem::Runit   => install_runit(&bin_path),
-        InitSystem::SysV    => install_sysv(&bin_path),
-        InitSystem::Launchd => install_launchd(&bin_path),
-        InitSystem::Scm     => install_windows(),
-        InitSystem::Unknown => {
+        InitSystem::Systemd   => install_systemd(&bin_path),
+        InitSystem::OpenRC    => install_openrc(&bin_path),
+        InitSystem::Runit     => install_runit(&bin_path),
+        InitSystem::S6        => install_s6(&bin_path),
+        InitSystem::Dinit     => install_dinit(&bin_path),
+        InitSystem::SysV      => install_sysv(&bin_path),
+        InitSystem::Slackware => install_slackware(&bin_path),
+        InitSystem::Launchd   => install_launchd(&bin_path),
+        InitSystem::Scm       => install_windows(),
+        InitSystem::Unknown   => {
             eprintln!("✗ Could not detect init system. Manual setup required.");
-            eprintln!("  See: https://github.com/sandikodev/kenari/blob/main/docs/CLI_DESIGN.md");
+            eprintln!("  See: https://github.com/sandikodev/kenari/blob/main/docs/AGENT.md");
             Ok(())
         }
     }
@@ -117,6 +120,48 @@ fn install_launchd(bin: &str) -> anyhow::Result<()> {
     std::fs::write(path, plist)?;
     Command::new("launchctl").args(["load", "-w", path]).status()?;
     println!("✓ Installed as launchd daemon");
+    Ok(())
+}
+
+fn install_s6(bin: &str) -> anyhow::Result<()> {
+    // s6 service directory
+    let svc_dir = "/etc/s6/sv/kenari-agent";
+    std::fs::create_dir_all(svc_dir)?;
+    let run = format!("#!/bin/execlineb -P\n{bin} agent start\n");
+    std::fs::write(format!("{svc_dir}/run"), run)?;
+    Command::new("chmod").args(["+x", &format!("{svc_dir}/run")]).status()?;
+    // Link to scan directory if it exists
+    let scan = "/run/s6/services";
+    if std::path::Path::new(scan).exists() {
+        std::os::unix::fs::symlink(svc_dir, format!("{scan}/kenari-agent")).ok();
+        Command::new("s6-svscanctl").args(["-a", scan]).status().ok();
+    }
+    println!("✓ Installed as s6 service");
+    println!("  Logs: s6-svstat /etc/s6/sv/kenari-agent");
+    Ok(())
+}
+
+fn install_dinit(bin: &str) -> anyhow::Result<()> {
+    let service = format!(
+        "type = process\ncommand = {bin} agent start\nrestart = true\nwants-network = true\n"
+    );
+    std::fs::write("/etc/dinit.d/kenari-agent", service)?;
+    Command::new("dinitctl").args(["enable", "kenari-agent"]).status()?;
+    Command::new("dinitctl").args(["start", "kenari-agent"]).status()?;
+    println!("✓ Installed as Dinit service");
+    println!("  Status: dinitctl status kenari-agent");
+    Ok(())
+}
+
+fn install_slackware(bin: &str) -> anyhow::Result<()> {
+    let script = format!(
+        "#!/bin/sh\n# Kenari Agent\ncase \"$1\" in\n  start)\n    echo \"Starting Kenari agent...\"\n    {bin} agent start &\n    ;;\n  stop)\n    echo \"Stopping Kenari agent...\"\n    pkill -f \"kenari agent\"\n    ;;\n  restart)\n    $0 stop; sleep 1; $0 start\n    ;;\n  *)\n    echo \"Usage: $0 {{start|stop|restart}}\"\n    ;;\nesac\n"
+    );
+    std::fs::write("/etc/rc.d/rc.kenari-agent", script)?;
+    Command::new("chmod").args(["+x", "/etc/rc.d/rc.kenari-agent"]).status()?;
+    println!("✓ Installed as Slackware rc.d service");
+    println!("  Add to /etc/rc.d/rc.local: /etc/rc.d/rc.kenari-agent start");
+    println!("  Start now: /etc/rc.d/rc.kenari-agent start");
     Ok(())
 }
 

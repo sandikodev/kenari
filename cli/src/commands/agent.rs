@@ -59,19 +59,23 @@ async fn start() -> anyhow::Result<()> {
 
 fn service_cmd(action: &str) -> anyhow::Result<()> {
     let init = init::detect();
-    let (cmd, args): (&str, Vec<&str>) = match (&init, action) {
-        (InitSystem::Systemd, "stop")    => ("systemctl", vec!["stop", "kenari-agent"]),
-        (InitSystem::Systemd, "restart") => ("systemctl", vec!["restart", "kenari-agent"]),
-        (InitSystem::OpenRC,  "stop")    => ("rc-service", vec!["kenari-agent", "stop"]),
-        (InitSystem::OpenRC,  "restart") => ("rc-service", vec!["kenari-agent", "restart"]),
-        _ => {
-            ui::warn(&format!("Service management not supported for {}", init::name(&init)));
-            return Ok(());
-        }
+    let args: Option<(&str, Vec<&str>)> = match (&init, action) {
+        (InitSystem::Systemd, "stop")    => Some(("systemctl", vec!["stop", "kenari-agent"])),
+        (InitSystem::Systemd, "restart") => Some(("systemctl", vec!["restart", "kenari-agent"])),
+        (InitSystem::OpenRC,  "stop")    => Some(("rc-service", vec!["kenari-agent", "stop"])),
+        (InitSystem::OpenRC,  "restart") => Some(("rc-service", vec!["kenari-agent", "restart"])),
+        (InitSystem::Runit,   "stop")    => Some(("sv", vec!["stop", "kenari-agent"])),
+        (InitSystem::Runit,   "restart") => Some(("sv", vec!["restart", "kenari-agent"])),
+        (InitSystem::Dinit,   "stop")    => Some(("dinitctl", vec!["stop", "kenari-agent"])),
+        (InitSystem::Dinit,   "restart") => Some(("dinitctl", vec!["restart", "kenari-agent"])),
+        _ => None,
     };
-    let status = std::process::Command::new("sudo").arg(cmd).args(&args).status()?;
-    if status.success() {
-        ui::ok(&format!("Service {}ped", action));
+    match args {
+        Some((cmd, a)) => {
+            std::process::Command::new("sudo").arg(cmd).args(&a).status()?;
+            ui::ok(&format!("Service {}ped", action));
+        }
+        None => ui::warn(&format!("Service management not supported for {}", init::name(&init))),
     }
     Ok(())
 }
@@ -83,12 +87,17 @@ fn logs() -> anyhow::Result<()> {
                 .args(["-u", "kenari-agent", "-f", "--no-pager"])
                 .status()?;
         }
-        InitSystem::OpenRC => {
+        InitSystem::OpenRC | InitSystem::SysV | InitSystem::Slackware => {
             std::process::Command::new("tail")
                 .args(["-f", "/var/log/kenari-agent.log"])
                 .status()?;
         }
-        _ => ui::warn("Log tailing not supported for this init system"),
+        InitSystem::Runit => {
+            std::process::Command::new("sv")
+                .args(["log", "kenari-agent"])
+                .status()?;
+        }
+        _ => ui::warn("Log tailing not supported for this init system — check your init system's log directory"),
     }
     Ok(())
 }
