@@ -22,7 +22,6 @@ export function getRoutes(): MonitorRoute[] {
 			icon: '🟢',
 			description: 'Service uptime & incident monitoring',
 			proxyPath: '/uptime',
-			// Self-hosted: http://***REMOVED***-monitor-kuma:3001
 			// Edge:        https://uptime.yourdomain.com
 			upstreamUrl: env.KUMA_URL ?? 'http://localhost:3001',
 			authHeader: env.KUMA_API_TOKEN
@@ -35,7 +34,6 @@ export function getRoutes(): MonitorRoute[] {
 			icon: '📊',
 			description: 'Metrics, logs & analytics dashboards',
 			proxyPath: '/grafana',
-			// Self-hosted: http://***REMOVED***-monitor-grafana:3000
 			// Edge:        https://grafana.yourdomain.com
 			upstreamUrl: env.GRAFANA_URL ?? 'http://localhost:3000',
 			// Grafana auth proxy — user already authenticated via gateway

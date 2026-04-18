@@ -1,36 +1,33 @@
-name: ***REMOVED***-monitor
+name: kenari
 
 services:
-  # ── Gateway (SvelteKit) ───────────────────────────────────────────────────
   gateway:
-    image: ***REMOVED***-monitor:latest
-    container_name: ***REMOVED***-monitor-gateway
+    image: kenari:latest
+    container_name: kenari-gateway
     restart: unless-stopped
     env_file: .env.production
     volumes:
       - gateway-data:/app/data
     depends_on: [kuma, grafana]
-    networks: [nginx-net, monitor-net]
+    networks: [proxy-net, internal-net]
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
 
-  # ── Uptime Kuma ───────────────────────────────────────────────────────────
   kuma:
     image: louislam/uptime-kuma:1
-    container_name: ***REMOVED***-monitor-kuma
+    container_name: kenari-kuma
     restart: unless-stopped
     volumes:
       - kuma-data:/app/data
-    networks: [monitor-net]
+    networks: [internal-net]
 
-  # ── Grafana ───────────────────────────────────────────────────────────────
   grafana:
     image: grafana/grafana:latest
-    container_name: ***REMOVED***-monitor-grafana
+    container_name: kenari-grafana
     restart: unless-stopped
     environment:
-      GF_SERVER_ROOT_URL: https://monitor.***REMOVED***yk.sch.id/grafana
+      GF_SERVER_ROOT_URL: ${ORIGIN}/grafana
       GF_SERVER_SERVE_FROM_SUB_PATH: "true"
       GF_AUTH_PROXY_ENABLED: "true"
       GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-USER
@@ -40,7 +37,7 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
     volumes:
       - grafana-data:/var/lib/grafana
-    networks: [monitor-net]
+    networks: [internal-net]
 
 volumes:
   gateway-data:
@@ -48,7 +45,7 @@ volumes:
   grafana-data:
 
 networks:
-  nginx-net:
-    external: true
-  monitor-net:
+  proxy-net:
+    external: true   # your reverse proxy network (nginx-proxy, traefik, etc.)
+  internal-net:
     driver: bridge
