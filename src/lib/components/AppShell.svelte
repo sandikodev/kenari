@@ -4,9 +4,14 @@
 	let open = $state(false);
 
 	const isActive = (path: string) => $page.url.pathname === path;
+
+	async function signOut() {
+		await fetch('/logout', { method: 'POST' });
+		window.location.href = '/login';
+	}
 </script>
 
-<svelte:window on:click={() => (open = false)} />
+<svelte:window onclick={() => (open = false)} />
 
 <div class="min-h-screen bg-black text-white flex flex-col">
 
@@ -19,6 +24,7 @@
 			{#if user}
 				<div class="flex items-center gap-0.5">
 					<a href="/" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Dashboard</a>
+					<a href="/agents" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/agents') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Agents</a>
 					<a href="/status" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/status') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Status</a>
 					{#if user.role === 'admin'}
 						<a href="/admin" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/admin') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Admin</a>
@@ -29,7 +35,7 @@
 
 		{#if user}
 			<div class="relative">
-				<button on:click|stopPropagation={() => (open = !open)}
+				<button onclick={(e) => { e.stopPropagation(); open = !open; }}
 					class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition">
 					<div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
 						{user.name[0].toUpperCase()}
@@ -57,9 +63,7 @@
 							<a href="https://github.com/sandikodev/kenari" target="_blank" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">GitHub</a>
 						</div>
 						<div class="p-1.5 border-t border-white/8">
-							<form method="POST" action="/logout">
-								<button class="w-full text-left px-3 py-2 text-sm text-red-400/60 hover:text-red-400 hover:bg-red-500/5 rounded-lg transition">Sign out</button>
-							</form>
+							<button onclick={signOut} class="w-full text-left px-3 py-2 text-sm text-red-400/60 hover:text-red-400 hover:bg-red-500/5 rounded-lg transition">Sign out</button>
 						</div>
 					</div>
 				{/if}
@@ -104,6 +108,12 @@
 						<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
 					</svg>
 					Dashboard
+				</a>
+				<a href="/agents" class={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition ${isActive('/agents') ? 'text-white' : 'text-white/30'}`}>
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/>
+					</svg>
+					Agents
 				</a>
 				<a href="/status" class={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition ${isActive('/status') ? 'text-white' : 'text-white/30'}`}>
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
-	const time = new Date(data.checkedAt).toLocaleTimeString();
+	const time = $derived(new Date(data.checkedAt).toLocaleTimeString());
 </script>
 
 <svelte:head><title>Kenari — Status</title></svelte:head>

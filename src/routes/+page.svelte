@@ -2,7 +2,7 @@
 	import AppShell from '$lib/components/AppShell.svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
-	const user = data.user as unknown as { name: string; role: string };
+	const user = $derived(data.user as unknown as { name: string; role: string });
 </script>
 
 <svelte:head><title>Kenari — Dashboard</title></svelte:head>

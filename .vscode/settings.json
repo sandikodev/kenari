@@ -1,5 +1,12 @@
 {
-	"files.associations": {
-		"*.css": "tailwindcss"
+	"svelte.enable-ts-plugin": true,
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "svelte.svelte-vscode",
+	"[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+	"svelte.plugin.svelte.diagnostics.enable": true,
+	"svelte.plugin.svelte.compilerWarnings": {
+		"state_referenced_locally": "error",
+		"event_directive_deprecated": "error",
+		"a11y_consider_explicit_label": "warn"
 	}
 }
