@@ -4,7 +4,7 @@ import { getDb } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { verify } from '@node-rs/argon2';
-import { log } from '$lib/server/audit';
+import { log, trackFailedLogin, getFailedLoginCount } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -14,6 +14,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 export const actions: Actions = {
 	default: async ({ request, cookies, getClientAddress }) => {
+		const ip = getClientAddress();
+
+		// Rate limit: max 10 failed attempts per IP per minute
+		const failures = await getFailedLoginCount(ip, 60_000);
+		if (failures >= 10) return fail(429, { error: 'Too many attempts. Try again later.' });
+
 		const data = await request.formData();
 		const email = data.get('email') as string;
 		const password = data.get('password') as string;
@@ -23,17 +29,23 @@ export const actions: Actions = {
 		const db = getDb();
 		const user = await db.query.users.findFirst({ where: eq(users.email, email) });
 
-		if (!user?.passwordHash) return fail(401, { error: 'Invalid email or password' });
+		if (!user?.passwordHash) {
+			await trackFailedLogin(ip, email);
+			return fail(401, { error: 'Invalid email or password' });
+		}
 
 		const valid = await verify(user.passwordHash, password);
-		if (!valid) return fail(401, { error: 'Invalid email or password' });
+		if (!valid) {
+			await trackFailedLogin(ip, email);
+			return fail(401, { error: 'Invalid email or password' });
+		}
 
 		const lucia = getLucia();
 		const session = await lucia.createSession(user.id, {});
 		const cookie = lucia.createSessionCookie(session.id);
 		cookies.set(cookie.name, cookie.value, { path: '/', ...cookie.attributes });
 
-		await log('login', `email login`, user.id, getClientAddress());
+		await log('login', 'email', user.id, ip, request.headers.get('user-agent') ?? undefined);
 		redirect(302, '/');
 	}
 };

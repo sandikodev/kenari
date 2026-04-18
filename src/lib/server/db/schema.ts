@@ -23,6 +23,14 @@ export const auditLog = sqliteTable('audit_log', {
 	action: text('action').notNull(),
 	detail: text('detail'),
 	ip: text('ip'),
+	userAgent: text('user_agent'),
+	createdAt: integer('created_at').notNull()
+});
+
+export const failedLogins = sqliteTable('failed_logins', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	ip: text('ip').notNull(),
+	email: text('email'),
 	createdAt: integer('created_at').notNull()
 });
 
