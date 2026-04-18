@@ -1,0 +1,51 @@
+name: ***REMOVED***-monitor
+
+services:
+  # ── Gateway (SvelteKit) ───────────────────────────────────────────────────
+  gateway:
+    image: ***REMOVED***-monitor:latest
+    container_name: ***REMOVED***-monitor-gateway
+    restart: unless-stopped
+    env_file: .env
+    depends_on: [kuma, grafana]
+    networks: [nginx-net, monitor-net]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # ── Uptime Kuma ───────────────────────────────────────────────────────────
+  kuma:
+    image: louislam/uptime-kuma:1
+    container_name: ***REMOVED***-monitor-kuma
+    restart: unless-stopped
+    volumes:
+      - kuma-data:/app/data
+    networks: [monitor-net]
+
+  # ── Grafana ───────────────────────────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:11-ubuntu
+    container_name: ***REMOVED***-monitor-grafana
+    restart: unless-stopped
+    environment:
+      GF_SERVER_ROOT_URL: https://monitor.***REMOVED***yk.sch.id/grafana
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_AUTH_PROXY_ENABLED: "true"
+      GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-USER
+      GF_AUTH_PROXY_HEADER_PROPERTY: username
+      GF_AUTH_PROXY_AUTO_SIGN_UP: "true"
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+    networks: [monitor-net]
+
+volumes:
+  kuma-data:
+  grafana-data:
+
+networks:
+  nginx-net:
+    external: true
+  monitor-net:
+    driver: bridge
