@@ -1,4 +1,5 @@
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
+use clap_complete::Shell;
 
 mod commands;
 mod config;
@@ -22,34 +23,28 @@ struct Cli {
 enum Commands {
     /// Interactive setup wizard — register this host with a gateway
     Register {
-        /// Gateway URL (prompted if omitted)
-        #[arg(long)]
-        gateway: Option<String>,
-        /// Agent token from the gateway UI (prompted if omitted)
-        #[arg(long)]
-        token: Option<String>,
-        /// Host name (defaults to system hostname)
-        #[arg(long)]
-        name: Option<String>,
+        #[arg(long)] gateway: Option<String>,
+        #[arg(long)] token: Option<String>,
+        #[arg(long)] name: Option<String>,
     },
-
     /// Diagnose system health and configuration
     Doctor {
-        /// Automatically fix detected issues
-        #[arg(long, short)]
-        fix: bool,
+        #[arg(long, short)] fix: bool,
     },
-
     /// Show current system metrics
     Status,
-
     /// Push a one-time metric snapshot to the gateway
     Push,
-
     /// Manage the background agent service
     Agent {
         #[command(subcommand)]
         action: commands::agent::AgentAction,
+    },
+    /// Generate shell completion scripts
+    Completions {
+        /// Shell to generate completions for
+        #[arg(value_enum)]
+        shell: Shell,
     },
 }
 
@@ -58,10 +53,7 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        None => {
-            // No subcommand — show friendly onboarding
-            commands::onboard::run().await
-        }
+        None => commands::onboard::run().await,
         Some(Commands::Register { gateway, token, name }) => {
             commands::register::run(gateway, token, name).await
         }
@@ -69,5 +61,9 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Status) => commands::status::run(),
         Some(Commands::Push) => commands::push::run().await,
         Some(Commands::Agent { action }) => commands::agent::run(action).await,
+        Some(Commands::Completions { shell }) => {
+            clap_complete::generate(shell, &mut Cli::command(), "kenari", &mut std::io::stdout());
+            Ok(())
+        }
     }
 }

@@ -2,9 +2,10 @@ use crate::config::load_config;
 use crate::init::{self, InitSystem};
 use crate::metrics::collect;
 use crate::ui;
+use colored::Colorize;
 
 pub async fn run(fix: bool) -> anyhow::Result<()> {
-    println!("\n🐦 \x1b[1mKenari Doctor\x1b[0m\n");
+    println!("\n🐦 {}\n", "Kenari Doctor".bold());
 
     let mut issues: Vec<Issue> = vec![];
 
@@ -105,12 +106,12 @@ pub async fn run(fix: bool) -> anyhow::Result<()> {
 
     println!("  Found {} issue(s):", issues.len());
     for issue in &issues {
-        println!("    \x1b[33m•\x1b[0m {}", issue.description());
+        println!("    {} {}", "•".yellow(), issue.description());
     }
     println!();
 
     if !fix {
-        ui::info("Run \x1b[1mkenari doctor --fix\x1b[0m to resolve automatically");
+        ui::info(&format!("Run {} to resolve automatically", "kenari doctor --fix".bold()));
         println!();
         return Ok(());
     }

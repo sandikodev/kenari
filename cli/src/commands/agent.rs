@@ -1,4 +1,5 @@
 use clap::Subcommand;
+use colored::Colorize;
 use crate::config::load_config;
 use crate::init::{self, InitSystem};
 use crate::metrics::collect;
@@ -30,8 +31,8 @@ pub async fn run(action: AgentAction) -> anyhow::Result<()> {
 
 async fn start() -> anyhow::Result<()> {
     let config = load_config()?;
-    println!("\n🐦 \x1b[1mKenari Agent\x1b[0m");
-    ui::ok(&format!("Host: {} → {}", config.name, config.gateway));
+    println!("\n🐦 {}", "Kenari Agent".bold());
+    ui::ok(&format!("Host: {} → {}", config.name.bold(), config.gateway));
     ui::ok(&format!("Interval: {}s  (Ctrl+C to stop)\n", config.interval));
 
     let client = reqwest::Client::new();
@@ -47,7 +48,7 @@ async fn start() -> anyhow::Result<()> {
         let ts = chrono_now();
         match res {
             Ok(r) if r.status().is_success() => {
-                println!("  \x1b[32m↑\x1b[0m {} pushed (cpu {:.1}%)", ts, snapshot.metrics.cpu_percent);
+                println!("  {} {} pushed (cpu {:.1}%)", "↑".green(), ts, snapshot.metrics.cpu_percent);
             }
             Ok(r) => ui::warn(&format!("{} gateway returned {}", ts, r.status())),
             Err(e) => ui::err(&format!("{} push failed: {}", ts, e)),

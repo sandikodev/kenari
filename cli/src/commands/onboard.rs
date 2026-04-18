@@ -1,21 +1,22 @@
 use crate::config::load_config;
 use crate::ui;
+use colored::Colorize;
 
 pub async fn run() -> anyhow::Result<()> {
-    println!("\n🐦 \x1b[1mKenari\x1b[0m — A canary for your monitoring gateway\n");
+    println!("\n🐦 {} — A canary for your monitoring gateway\n", "Kenari".bold());
 
     match load_config() {
         Ok(cfg) => {
-            println!("  Registered as \x1b[1m{}\x1b[0m → {}\n", cfg.name, cfg.gateway);
-            println!("  \x1b[2mkenari status\x1b[0m       Show current metrics");
-            println!("  \x1b[2mkenari push\x1b[0m         Push metrics once");
-            println!("  \x1b[2mkenari agent start\x1b[0m  Start background agent");
-            println!("  \x1b[2mkenari doctor\x1b[0m       Diagnose & fix issues");
+            println!("  Registered as {} → {}\n", cfg.name.bold(), cfg.gateway);
+            println!("  {}       Show current metrics", "kenari status".dimmed());
+            println!("  {}         Push metrics once", "kenari push".dimmed());
+            println!("  {}  Start background agent", "kenari agent start".dimmed());
+            println!("  {}       Diagnose & fix issues", "kenari doctor".dimmed());
         }
         Err(_) => {
             println!("  Not registered yet.\n");
-            println!("  \x1b[2mkenari register\x1b[0m     Set up this host");
-            println!("  \x1b[2mkenari doctor\x1b[0m       Diagnose system");
+            println!("  {}     Set up this host", "kenari register".dimmed());
+            println!("  {}       Diagnose system", "kenari doctor".dimmed());
             println!();
             if ui::confirm("Register now?") {
                 crate::commands::register::run(None, None, None).await?;

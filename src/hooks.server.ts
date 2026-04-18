@@ -3,8 +3,11 @@ import { getLucia } from '$lib/server/auth';
 import { getDb } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
 import { redirect } from '@sveltejs/kit';
+import { initScheduler } from '$lib/server/scheduler';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Init background scheduler (idempotent)
+	try { initScheduler(); } catch { /* non-critical */ }
 	// First-run redirect
 	if (!event.url.pathname.startsWith('/setup') && !event.url.pathname.startsWith('/auth')) {
 		try {

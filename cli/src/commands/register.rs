@@ -1,17 +1,16 @@
 use crate::config::{Config, save_config};
 use crate::ui;
+use colored::Colorize;
 
 pub async fn run(
     gateway: Option<String>,
     token: Option<String>,
     name: Option<String>,
 ) -> anyhow::Result<()> {
-    println!("\n🐦 \x1b[1mKenari Register\x1b[0m\n");
+    println!("\n🐦 {}\n", "Kenari Register".bold());
 
     let default_name = std::fs::read_to_string("/etc/hostname")
-        .unwrap_or_default()
-        .trim()
-        .to_string();
+        .unwrap_or_default().trim().to_string();
 
     let gateway = match gateway {
         Some(g) => g,
@@ -20,7 +19,7 @@ pub async fn run(
     let token = match token {
         Some(t) => t,
         None => {
-            println!("  \x1b[2mGet your token from: {}/agents\x1b[0m", gateway);
+            println!("  {}", format!("Get your token from: {}/agents", gateway).dimmed());
             ui::prompt("Agent token", None)
         }
     };
@@ -34,17 +33,15 @@ pub async fn run(
         return Ok(());
     }
 
-    // Verify token against gateway
     ui::info(&format!("Verifying token with {}...", gateway));
     let client = reqwest::Client::new();
     let res = client
         .post(format!("{}/api/agent/push", gateway))
         .bearer_auth(&token)
         .json(&serde_json::json!({
-            "host_id": &name,
-            "timestamp": 0,
-            "metrics": { "cpu_percent": 0, "memory_used_mb": 0, "memory_total_mb": 0,
-                         "disk_used_gb": 0, "disk_total_gb": 0, "uptime_secs": 0 }
+            "host_id": &name, "timestamp": 0,
+            "metrics": { "cpu_percent": 0, "memory_used_mb": 0, "memory_total_mb": 1,
+                         "disk_used_gb": 0, "disk_total_gb": 1, "uptime_secs": 0 }
         }))
         .send()
         .await;
@@ -56,9 +53,7 @@ pub async fn run(
         }
         Err(e) => {
             ui::warn(&format!("Could not reach gateway: {}", e));
-            if !ui::confirm("Save config anyway?") {
-                return Ok(());
-            }
+            if !ui::confirm("Save config anyway?") { return Ok(()); }
         }
         _ => {}
     }
@@ -70,8 +65,8 @@ pub async fn run(
     ui::ok(&format!("Registered as '{}' → {}", name, gateway));
     println!();
     println!("  Next steps:");
-    println!("  \x1b[2mkenari doctor --fix\x1b[0m   Install as system service");
-    println!("  \x1b[2mkenari agent start\x1b[0m    Start in foreground");
+    println!("  {}   Install as system service", "kenari doctor --fix".dimmed());
+    println!("  {}    Start in foreground", "kenari agent start".dimmed());
     println!();
     Ok(())
 }
