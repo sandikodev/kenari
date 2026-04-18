@@ -6,7 +6,7 @@ export const users = sqliteTable('users', {
 	name: text('name').notNull(),
 	passwordHash: text('password_hash'),
 	githubId: text('github_id').unique(),
-	role: text('role').notNull().default('viewer'), // 'admin' | 'viewer'
+	role: text('role').notNull().default('viewer'),
 	createdAt: integer('created_at').notNull()
 });
 

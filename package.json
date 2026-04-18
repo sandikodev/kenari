@@ -60,6 +60,7 @@
 		"@node-rs/argon2": "^2.0.2",
 		"@sveltejs/adapter-cloudflare": "^7.2.8",
 		"@sveltejs/adapter-node": "^5.5.4",
+		"arctic": "^3.7.0",
 		"lucia": "^3.2.2",
 		"nanoid": "^5.1.9"
 	},
