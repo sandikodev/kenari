@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
-	let { user, children }: { user: { name: string; role: string } | null; children: any } = $props();
+	let { user, children }: { user: { name: string; role: string; avatarUrl?: string | null } | null; children: any } = $props();
 	let open = $state(false);
 
 	const isActive = (path: string) => $page.url.pathname === path;
@@ -37,8 +37,12 @@
 			<div class="relative">
 				<button onclick={(e) => { e.stopPropagation(); open = !open; }}
 					class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition">
-					<div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
-						{user.name[0].toUpperCase()}
+					<div class="w-6 h-6 rounded-full overflow-hidden bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
+						{#if user.avatarUrl}
+							<img src={user.avatarUrl} alt={user.name} class="w-full h-full object-cover">
+						{:else}
+							{user.name[0].toUpperCase()}
+						{/if}
 					</div>
 					<span class="text-sm">{user.name}</span>
 					{#if user.role === 'admin'}
@@ -57,6 +61,7 @@
 						</div>
 						<div class="p-1.5 flex flex-col gap-0.5">
 							<a href="/status" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">Status Page</a>
+							<a href="/settings" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">Settings</a>
 							{#if user.role === 'admin'}
 								<a href="/admin" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">Admin</a>
 							{/if}
@@ -81,9 +86,13 @@
 				{#if user.role === 'admin'}
 					<span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full">admin</span>
 				{/if}
-				<div class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
+				<div class="w-7 h-7 rounded-full overflow-hidden bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
+				{#if user.avatarUrl}
+					<img src={user.avatarUrl} alt={user.name} class="w-full h-full object-cover">
+				{:else}
 					{user.name[0].toUpperCase()}
-				</div>
+				{/if}
+			</div>
 			</div>
 		{/if}
 	</header>

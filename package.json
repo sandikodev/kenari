@@ -47,11 +47,12 @@
 		"test:unit": "vitest",
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test",
-		"db:push": "drizzle-kit push",
-		"db:generate": "drizzle-kit generate",
-		"db:migrate": "drizzle-kit migrate",
-		"db:studio": "drizzle-kit studio",
-		"auth:schema": "better-auth generate --config src/lib/server/auth.ts --output src/lib/server/db/auth.schema.ts --yes"
+		"db:push": "bun --env-file=.env.local run drizzle-kit push",
+		"db:push:prod": "bun --env-file=.env.production run drizzle-kit push",
+		"db:generate": "bun --env-file=.env.local run drizzle-kit generate",
+		"db:migrate": "bun --env-file=.env.local run drizzle-kit migrate",
+		"db:studio": "bun --env-file=.env.local run drizzle-kit studio",
+		"db:drop": "bun --env-file=.env.local run drizzle-kit drop"
 	},
 	"type": "module",
 	"dependencies": {

@@ -68,7 +68,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		user = await db.query.users.findFirst({ where: eq(users.email, ghEmail) });
 		if (user) {
 			// Link GitHub to existing account
-			await db.update(users).set({ githubId: String(ghUser.id) }).where(eq(users.id, user.id));
+			await db.update(users).set({ githubId: String(ghUser.id), avatarUrl: ghUser.avatar_url ?? null }).where(eq(users.id, user.id));
 		} else {
 			// Create new user — first user becomes admin
 			const count = await db.select().from(users);
@@ -80,6 +80,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 					email: ghEmail,
 					name: ghUser.name ?? ghUser.login,
 					githubId: String(ghUser.id),
+					avatarUrl: ghUser.avatar_url ?? null,
 					role,
 					createdAt: Date.now()
 				})

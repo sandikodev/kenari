@@ -14,7 +14,8 @@ export function getLucia(): Lucia {
 		getUserAttributes: (attrs) => ({
 			email: attrs.email,
 			name: attrs.name,
-			role: attrs.role
+			role: attrs.role,
+			avatarUrl: attrs.avatarUrl
 		})
 	});
 	return _lucia;
@@ -25,6 +26,6 @@ export type LuciaType = ReturnType<typeof getLucia>;
 declare module 'lucia' {
 	interface Register {
 		Lucia: LuciaType;
-		DatabaseUserAttributes: { email: string; name: string; role: string };
+		DatabaseUserAttributes: { email: string; name: string; role: string; avatarUrl: string | null };
 	}
 }

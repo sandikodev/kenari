@@ -14,4 +14,5 @@ COPY --from=builder /app/package.json ./
 
 EXPOSE 3000
 ENV HOST=0.0.0.0 PORT=3000 NODE_ENV=production
-CMD ["bun", "./build/index.js"]
+ENV BUN_RUNTIME_TRANSPILER_CACHE_PATH=0
+CMD ["bun", "--smol", "./build/index.js"]

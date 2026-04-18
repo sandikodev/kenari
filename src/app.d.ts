@@ -9,11 +9,4 @@ declare global {
 	}
 }
 
-declare module 'lucia' {
-	interface Register {
-		Lucia: import('$lib/server/auth').LuciaType;
-		DatabaseUserAttributes: { email: string; name: string; role: string };
-	}
-}
-
 export {};
