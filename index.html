@@ -1,433 +1,359 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kenari — A canary for your monitoring gateway</title>
-  <meta name="description" content="Open source SSO gateway for your monitoring tools. One login, all your dashboards. Deploy on the edge, far from what you monitor.">
-  <meta property="og:title" content="Kenari — A canary for your monitoring gateway">
-  <meta property="og:description" content="Open source SSO gateway for Grafana, Uptime Kuma, and any monitoring tool.">
-  <meta property="og:image" content="https://sandikodev.github.io/kenari/og.png">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kenari — A canary for your monitoring gateway</title>
+<meta name="description" content="Open source SSO gateway for your monitoring tools. One login, all your dashboards.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#000;--surface:#0a0a0a;--border:rgba(255,255,255,.08);
+  --text:#fff;--muted:#888;--subtle:#444;
+  --amber:#f59e0b;--amber-dim:rgba(245,158,11,.1);
+  --green:#22c55e;--blue:#3b82f6;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;line-height:1.6;overflow-x:hidden}
 
-    :root {
-      --bg: #030712;
-      --surface: #0f172a;
-      --border: #1e293b;
-      --text: #f1f5f9;
-      --muted: #64748b;
-      --accent: #f59e0b;
-      --accent-dim: #78350f;
-      --green: #22c55e;
-      --blue: #3b82f6;
-    }
+/* ── Noise texture overlay ── */
+body::before{
+  content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.4;
+}
 
-    html { scroll-behavior: smooth; }
+/* ── Nav ── */
+nav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  padding:0 24px;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid var(--border);
+  background:rgba(0,0,0,.8);backdrop-filter:blur(20px);
+}
+.logo{display:flex;align-items:center;gap:8px;font-size:.95rem;font-weight:600;text-decoration:none;color:var(--text)}
+.logo-icon{font-size:1.1rem}
+.nav-right{display:flex;align-items:center;gap:8px}
+.nav-link{color:var(--muted);text-decoration:none;font-size:.875rem;padding:6px 12px;border-radius:8px;transition:color .15s,background .15s}
+.nav-link:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-btn{
+  background:var(--text);color:#000;
+  padding:7px 16px;border-radius:8px;font-size:.875rem;font-weight:600;
+  text-decoration:none;transition:opacity .15s;
+}
+.nav-btn:hover{opacity:.85}
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      line-height: 1.6;
-      overflow-x: hidden;
-    }
+/* ── Hero ── */
+.hero{
+  position:relative;min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;padding:100px 24px 80px;overflow:hidden;
+}
+.hero-glow{
+  position:absolute;top:-20%;left:50%;transform:translateX(-50%);
+  width:800px;height:600px;
+  background:radial-gradient(ellipse at center,rgba(245,158,11,.12) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-grid{
+  position:absolute;inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse 80% 60% at 50% 0%,black 0%,transparent 100%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--border);background:rgba(255,255,255,.03);
+  padding:5px 14px;border-radius:100px;font-size:.8rem;color:var(--muted);
+  margin-bottom:32px;
+}
+.hero-badge span{color:var(--amber)}
+.hero h1{
+  font-size:clamp(2.8rem,7vw,5.5rem);font-weight:800;
+  letter-spacing:-.04em;line-height:1.05;margin-bottom:24px;
+  background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.7) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero h1 em{font-style:normal;-webkit-text-fill-color:var(--amber)}
+.hero-sub{
+  font-size:clamp(1rem,2vw,1.2rem);color:var(--muted);
+  max-width:520px;margin:0 auto 40px;line-height:1.7;
+}
+.hero-cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:64px}
+.btn-primary{
+  background:var(--text);color:#000;
+  padding:12px 24px;border-radius:10px;font-weight:700;font-size:.9rem;
+  text-decoration:none;transition:opacity .15s;display:inline-flex;align-items:center;gap:8px;
+}
+.btn-primary:hover{opacity:.85}
+.btn-ghost{
+  border:1px solid var(--border);color:var(--muted);
+  padding:12px 24px;border-radius:10px;font-weight:600;font-size:.9rem;
+  text-decoration:none;transition:border-color .15s,color .15s;
+}
+.btn-ghost:hover{border-color:var(--subtle);color:var(--text)}
 
-    /* ── Nav ── */
-    nav {
-      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
-      z-index: 100; width: calc(100% - 32px); max-width: 900px;
-      background: rgba(15,23,42,0.8); backdrop-filter: blur(12px);
-      border: 1px solid var(--border); border-radius: 16px;
-      padding: 12px 24px;
-      display: flex; align-items: center; justify-content: space-between;
-    }
-    .nav-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1.1rem; text-decoration: none; color: var(--text); }
-    .nav-logo span { color: var(--accent); }
-    .nav-links { display: flex; align-items: center; gap: 24px; }
-    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
-    .nav-links a:hover { color: var(--text); }
-    .btn-primary {
-      background: var(--accent); color: #000; padding: 8px 20px;
-      border-radius: 10px; font-weight: 600; font-size: 0.85rem;
-      text-decoration: none; transition: opacity 0.2s;
-    }
-    .btn-primary:hover { opacity: 0.85; }
+/* ── Terminal ── */
+.terminal{
+  width:100%;max-width:680px;
+  background:#0a0a0a;border:1px solid var(--border);
+  border-radius:16px;overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,.03),0 40px 80px rgba(0,0,0,.6);
+}
+.term-bar{
+  background:#111;padding:12px 16px;
+  display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);
+}
+.dot{width:11px;height:11px;border-radius:50%}
+.dr{background:#ff5f57}.dy{background:#febc2e}.dg{background:#28c840}
+.term-url{margin-left:8px;color:var(--subtle);font-size:.78rem;font-family:monospace}
+.term-body{padding:20px 24px;font-family:'SF Mono','Fira Code',monospace;font-size:.82rem;line-height:2}
+.tc{color:#333}.tk{color:var(--amber)}.to{color:var(--green)}.tu{color:#60a5fa}.td{color:#555}
 
-    /* ── Hero ── */
-    .hero {
-      min-height: 100vh; display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center; padding: 120px 24px 80px;
-      position: relative; overflow: hidden;
-    }
-    .hero::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(245,158,11,0.08) 0%, transparent 70%);
-      pointer-events: none;
-    }
-    .badge {
-      display: inline-flex; align-items: center; gap: 6px;
-      background: var(--accent-dim); color: var(--accent);
-      border: 1px solid rgba(245,158,11,0.3);
-      padding: 4px 14px; border-radius: 100px; font-size: 0.8rem; font-weight: 600;
-      margin-bottom: 24px;
-    }
-    .hero h1 {
-      font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 800;
-      line-height: 1.1; letter-spacing: -0.03em; margin-bottom: 24px;
-    }
-    .hero h1 em { font-style: normal; color: var(--accent); }
-    .hero p {
-      font-size: clamp(1rem, 2vw, 1.25rem); color: var(--muted);
-      max-width: 600px; margin: 0 auto 40px;
-    }
-    .hero-cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-    .btn-outline {
-      border: 1px solid var(--border); color: var(--text);
-      padding: 12px 24px; border-radius: 12px; font-weight: 600;
-      text-decoration: none; transition: border-color 0.2s, background 0.2s;
-      display: flex; align-items: center; gap-8px;
-    }
-    .btn-outline:hover { border-color: var(--muted); background: var(--surface); }
-    .btn-hero {
-      background: var(--accent); color: #000;
-      padding: 12px 28px; border-radius: 12px; font-weight: 700;
-      text-decoration: none; transition: opacity 0.2s;
-    }
-    .btn-hero:hover { opacity: 0.85; }
+/* ── Section ── */
+.section{padding:100px 24px;max-width:1000px;margin:0 auto;position:relative;z-index:1}
+.section-tag{
+  display:inline-block;color:var(--amber);font-size:.75rem;font-weight:700;
+  letter-spacing:.1em;text-transform:uppercase;margin-bottom:16px;
+}
+.section h2{
+  font-size:clamp(1.8rem,4vw,2.8rem);font-weight:800;
+  letter-spacing:-.03em;line-height:1.15;margin-bottom:16px;
+}
+.section-sub{color:var(--muted);font-size:1.05rem;max-width:520px;margin-bottom:56px;line-height:1.7}
 
-    /* ── Terminal demo ── */
-    .terminal {
-      margin: 60px auto 0; max-width: 700px; width: 100%;
-      background: #0a0a0a; border: 1px solid var(--border);
-      border-radius: 16px; overflow: hidden;
-      box-shadow: 0 40px 80px rgba(0,0,0,0.5);
-    }
-    .terminal-bar {
-      background: var(--surface); padding: 12px 16px;
-      display: flex; align-items: center; gap: 8px;
-    }
-    .dot { width: 12px; height: 12px; border-radius: 50%; }
-    .dot-red { background: #ff5f57; }
-    .dot-yellow { background: #febc2e; }
-    .dot-green { background: #28c840; }
-    .terminal-url { margin-left: 8px; color: var(--muted); font-size: 0.8rem; font-family: monospace; }
-    .terminal-body { padding: 24px; font-family: 'SF Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.8; }
-    .t-comment { color: #4b5563; }
-    .t-cmd { color: #f59e0b; }
-    .t-out { color: #22c55e; }
-    .t-url { color: #60a5fa; }
-    .t-dim { color: #6b7280; }
+/* ── Steps ── */
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--border);border-radius:16px;overflow:hidden}
+.step{background:var(--bg);padding:32px 28px}
+.step-num{font-size:.75rem;font-weight:700;color:var(--amber);letter-spacing:.05em;margin-bottom:16px}
+.step h3{font-size:1rem;font-weight:700;margin-bottom:10px}
+.step p{color:var(--muted);font-size:.875rem;line-height:1.6}
 
-    /* ── How it works ── */
-    section { padding: 80px 24px; max-width: 1000px; margin: 0 auto; }
-    .section-label { color: var(--accent); font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
-    h2 { font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 800; letter-spacing: -0.02em; margin-bottom: 16px; }
-    .subtitle { color: var(--muted); font-size: 1.1rem; max-width: 600px; margin-bottom: 48px; }
+/* ── Features ── */
+.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:1px;background:var(--border);border-radius:20px;overflow:hidden}
+.feat{background:var(--bg);padding:32px;transition:background .2s}
+.feat:hover{background:#0a0a0a}
+.feat-icon{font-size:1.5rem;margin-bottom:20px}
+.feat h3{font-size:.95rem;font-weight:700;margin-bottom:10px}
+.feat p{color:var(--muted);font-size:.875rem;line-height:1.6}
+.feat-tag{font-size:.7rem;color:var(--subtle);font-weight:500;margin-left:6px}
 
-    .flow {
-      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 2px; background: var(--border); border-radius: 16px; overflow: hidden;
-    }
-    .flow-step {
-      background: var(--bg); padding: 28px 24px;
-    }
-    .flow-num { color: var(--accent); font-size: 0.8rem; font-weight: 700; margin-bottom: 12px; }
-    .flow-step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
-    .flow-step p { color: var(--muted); font-size: 0.875rem; }
+/* ── Code block ── */
+.code-block{
+  background:#0a0a0a;border:1px solid var(--border);
+  border-radius:16px;padding:28px 32px;
+  font-family:'SF Mono','Fira Code',monospace;font-size:.82rem;
+  line-height:1.9;overflow-x:auto;color:#666;
+}
+.ch{color:var(--amber)}.cg{color:var(--green)}.cb{color:var(--blue)}.cm{color:#888}
 
-    /* ── Features ── */
-    .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
-    .feature {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 28px;
-      transition: border-color 0.2s;
-    }
-    .feature:hover { border-color: rgba(245,158,11,0.3); }
-    .feature-icon { font-size: 1.8rem; margin-bottom: 16px; }
-    .feature h3 { font-size: 1rem; font-weight: 700; margin-bottom: 8px; }
-    .feature p { color: var(--muted); font-size: 0.875rem; }
+/* ── Roadmap ── */
+.roadmap{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.rm{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px}
+.rm-head{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.rm-v{font-size:.75rem;font-weight:700;padding:3px 10px;border-radius:100px}
+.v-now{background:rgba(34,197,94,.1);color:var(--green)}
+.v-next{background:rgba(59,130,246,.1);color:var(--blue)}
+.v-future{background:rgba(255,255,255,.05);color:var(--muted)}
+.rm h3{font-size:.95rem;font-weight:700}
+.rm-list{display:flex;flex-direction:column;gap:10px}
+.ri{display:flex;align-items:flex-start;gap:10px;font-size:.875rem;color:var(--muted)}
+.ri.done{color:var(--text)}
+.ri-dot{width:16px;height:16px;border-radius:50%;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;font-size:.6rem}
+.ri.done .ri-dot{background:rgba(34,197,94,.15);color:var(--green)}
+.ri:not(.done) .ri-dot{background:rgba(255,255,255,.04);color:var(--subtle)}
 
-    /* ── Architecture ── */
-    .arch {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 32px; font-family: monospace; font-size: 0.85rem;
-      line-height: 1.8; overflow-x: auto; color: #94a3b8;
-    }
-    .arch .hl { color: var(--accent); }
-    .arch .green { color: var(--green); }
-    .arch .blue { color: var(--blue); }
+/* ── CTA ── */
+.cta{
+  text-align:center;padding:120px 24px;position:relative;overflow:hidden;
+}
+.cta-glow{
+  position:absolute;bottom:-50%;left:50%;transform:translateX(-50%);
+  width:600px;height:400px;
+  background:radial-gradient(ellipse at center,rgba(245,158,11,.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.cta h2{font-size:clamp(2rem,5vw,3.5rem);font-weight:800;letter-spacing:-.03em;margin-bottom:16px}
+.cta p{color:var(--muted);font-size:1.05rem;margin-bottom:40px}
+.cta-btns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
 
-    /* ── Roadmap ── */
-    .roadmap { display: flex; flex-direction: column; gap: 16px; }
-    .rm-phase {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 16px; padding: 24px;
-    }
-    .rm-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .rm-badge {
-      padding: 3px 10px; border-radius: 100px; font-size: 0.75rem; font-weight: 700;
-    }
-    .rm-current { background: rgba(34,197,94,0.15); color: var(--green); }
-    .rm-next { background: rgba(59,130,246,0.15); color: var(--blue); }
-    .rm-future { background: rgba(100,116,139,0.15); color: var(--muted); }
-    .rm-phase h3 { font-size: 1rem; font-weight: 700; }
-    .rm-items { display: flex; flex-direction: column; gap: 8px; }
-    .rm-item { display: flex; align-items: center; gap: 10px; font-size: 0.875rem; color: var(--muted); }
-    .rm-item.done { color: var(--text); }
-    .rm-item.done::before { content: '✓'; color: var(--green); font-weight: 700; }
-    .rm-item:not(.done)::before { content: '○'; color: var(--border); }
+/* ── Footer ── */
+footer{
+  border-top:1px solid var(--border);padding:32px 24px;
+  display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;
+  max-width:1000px;margin:0 auto;
+}
+.footer-left{font-size:.875rem;color:var(--muted)}
+.footer-left strong{color:var(--text)}
+.footer-right{display:flex;gap:20px}
+.footer-right a{color:var(--subtle);text-decoration:none;font-size:.875rem;transition:color .15s}
+.footer-right a:hover{color:var(--text)}
 
-    /* ── CTA ── */
-    .cta-section {
-      text-align: center; padding: 80px 24px;
-      background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(245,158,11,0.06) 0%, transparent 70%);
-    }
-    .cta-section h2 { margin-bottom: 16px; }
-    .cta-section p { color: var(--muted); margin-bottom: 32px; }
-    .cta-buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
-
-    /* ── Footer ── */
-    footer {
-      border-top: 1px solid var(--border); padding: 32px 24px;
-      text-align: center; color: var(--muted); font-size: 0.875rem;
-    }
-    footer a { color: var(--muted); text-decoration: none; }
-    footer a:hover { color: var(--text); }
-
-    @media (max-width: 640px) {
-      .nav-links { display: none; }
-    }
-  </style>
+@media(max-width:640px){
+  .nav-link{display:none}
+  footer{flex-direction:column;text-align:center}
+  .footer-right{justify-content:center}
+}
+</style>
 </head>
 <body>
 
-<!-- Nav -->
 <nav>
-  <a href="#" class="nav-logo">🐦 <span>Kenari</span></a>
-  <div class="nav-links">
-    <a href="#how">How it works</a>
-    <a href="#features">Features</a>
-    <a href="#roadmap">Roadmap</a>
-    <a href="https://github.com/sandikodev/kenari" target="_blank">GitHub</a>
-    <a href="https://github.com/sandikodev/kenari" class="btn-primary" target="_blank">Get Started →</a>
+  <a href="#" class="logo"><span class="logo-icon">🐦</span> Kenari</a>
+  <div class="nav-right">
+    <a href="#how" class="nav-link">How it works</a>
+    <a href="#features" class="nav-link">Features</a>
+    <a href="#roadmap" class="nav-link">Roadmap</a>
+    <a href="https://github.com/sandikodev/kenari" class="nav-btn" target="_blank">GitHub →</a>
   </div>
 </nav>
 
-<!-- Hero -->
 <section class="hero">
-  <div class="badge">🐦 Open Source · v0.1</div>
+  <div class="hero-glow"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-badge"><span>🐦</span> Open Source · v0.1 · MIT</div>
   <h1>A <em>canary</em> for your<br>monitoring gateway</h1>
-  <p>
-    One login. All your dashboards. Deploy Kenari on the edge —
-    far from the infrastructure it monitors.
-    Because a canary that lives in the mine isn't much use.
-  </p>
+  <p class="hero-sub">One login. All your dashboards. Deploy on the edge — far from the infrastructure it monitors. Because a canary that lives in the mine isn't much use.</p>
   <div class="hero-cta">
-    <a href="https://github.com/sandikodev/kenari" class="btn-hero" target="_blank">⭐ Star on GitHub</a>
-    <a href="https://github.com/sandikodev/kenari#quick-start" class="btn-outline" target="_blank">Quick Start →</a>
+    <a href="https://github.com/sandikodev/kenari" class="btn-primary" target="_blank">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      Star on GitHub
+    </a>
+    <a href="https://github.com/sandikodev/kenari#quick-start" class="btn-ghost" target="_blank">Quick Start →</a>
   </div>
 
   <div class="terminal">
-    <div class="terminal-bar">
-      <div class="dot dot-red"></div>
-      <div class="dot dot-yellow"></div>
-      <div class="dot dot-green"></div>
-      <span class="terminal-url">monitor.yourdomain.com</span>
+    <div class="term-bar">
+      <div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>
+      <span class="term-url">monitor.yourdomain.com</span>
     </div>
-    <div class="terminal-body">
-      <div class="t-comment"># Deploy Kenari on Cloudflare Pages</div>
-      <div class="t-cmd">$ git clone github.com/sandikodev/kenari</div>
-      <div class="t-cmd">$ bun install && bun run build:edge</div>
+    <div class="term-body">
+      <div class="tc"># Deploy on Cloudflare Pages in minutes</div>
+      <div class="tk">$ git clone github.com/sandikodev/kenari</div>
+      <div class="tk">$ bun install && bun run build:edge</div>
       <br>
-      <div class="t-comment"># Login once, access everything</div>
-      <div class="t-out">✓ Authenticated as admin@yourdomain.com</div>
+      <div class="to">✓ Authenticated · admin@yourdomain.com</div>
       <br>
-      <div class="t-dim">Available dashboards:</div>
-      <div class="t-out">  🟢 Uptime Kuma    <span class="t-url">→ /uptime</span>   <span style="color:#22c55e">online</span></div>
-      <div class="t-out">  📊 Grafana        <span class="t-url">→ /grafana</span>  <span style="color:#22c55e">online</span></div>
-      <div class="t-out">  🔍 Custom Tool    <span class="t-url">→ /custom</span>   <span style="color:#22c55e">online</span></div>
+      <div class="td">Available dashboards</div>
+      <div class="to">  🟢 Uptime Kuma  <span class="tu">→ /uptime</span></div>
+      <div class="to">  📊 Grafana      <span class="tu">→ /grafana</span></div>
+      <div class="to">  🔍 Custom       <span class="tu">→ /custom</span></div>
     </div>
   </div>
 </section>
 
-<!-- How it works -->
-<section id="how">
-  <div class="section-label">How it works</div>
+<section class="section" id="how">
+  <div class="section-tag">How it works</div>
   <h2>Simple by design</h2>
-  <p class="subtitle">Kenari sits between your users and your monitoring tools, handling authentication so your tools don't have to.</p>
-
-  <div class="flow">
-    <div class="flow-step">
-      <div class="flow-num">01</div>
-      <h3>Deploy Kenari on the edge</h3>
-      <p>Run on Cloudflare Pages — geographically separate from your infrastructure.</p>
-    </div>
-    <div class="flow-step">
-      <div class="flow-num">02</div>
-      <h3>Configure your routes</h3>
-      <p>Add your monitoring tools in <code>monitor.config.ts</code>. No UI required.</p>
-    </div>
-    <div class="flow-step">
-      <div class="flow-num">03</div>
-      <h3>Login once</h3>
-      <p>Email/password or GitHub OAuth. Session managed by Lucia auth.</p>
-    </div>
-    <div class="flow-step">
-      <div class="flow-num">04</div>
-      <h3>Access everything</h3>
-      <p>Kenari proxies requests with auth headers injected. Your tools never see unauthenticated traffic.</p>
-    </div>
+  <p class="section-sub">Kenari sits between your users and your monitoring tools, handling auth so your tools don't have to.</p>
+  <div class="steps">
+    <div class="step"><div class="step-num">01</div><h3>Deploy on the edge</h3><p>Run on Cloudflare Pages — geographically separate from your infrastructure.</p></div>
+    <div class="step"><div class="step-num">02</div><h3>Configure routes</h3><p>Add your tools in <code style="color:var(--amber);font-size:.8rem">monitor.config.ts</code>. No UI, no database migrations.</p></div>
+    <div class="step"><div class="step-num">03</div><h3>Login once</h3><p>Email/password or GitHub OAuth. Session managed by Lucia auth.</p></div>
+    <div class="step"><div class="step-num">04</div><h3>Access everything</h3><p>Kenari proxies requests with auth headers injected automatically.</p></div>
   </div>
 </section>
 
-<!-- Features -->
-<section id="features">
-  <div class="section-label">Features</div>
+<section class="section" id="features">
+  <div class="section-tag">Features</div>
   <h2>Everything you need</h2>
-  <p class="subtitle">Built for teams who take monitoring seriously.</p>
-
+  <p class="section-sub">Built for teams who take monitoring seriously.</p>
   <div class="features">
-    <div class="feature">
-      <div class="feature-icon">🔐</div>
-      <h3>Single Sign-On</h3>
-      <p>One login for all your monitoring tools. Email/password and GitHub OAuth out of the box.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🌍</div>
-      <h3>Edge-first</h3>
-      <p>Deploy on Cloudflare Pages, Vercel, or any edge runtime. Separate from what you monitor.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🔌</div>
-      <h3>Config-driven</h3>
-      <p>Add monitoring routes in a single TypeScript file. No database migrations, no UI clicks.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🟢</div>
-      <h3>Health checks</h3>
-      <p>Real-time upstream status on your dashboard. Know immediately when something is down.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">🦀</div>
-      <h3>Kenari CLI <span style="font-size:0.7rem;color:var(--muted);font-weight:400">coming soon</span></h3>
-      <p>Rust agent installed on monitored hosts. Sends metrics without exposing inbound ports.</p>
-    </div>
-    <div class="feature">
-      <div class="feature-icon">📋</div>
-      <h3>Audit log <span style="font-size:0.7rem;color:var(--muted);font-weight:400">v0.2</span></h3>
-      <p>Who accessed what, when. Full visibility into your team's monitoring activity.</p>
-    </div>
+    <div class="feat"><div class="feat-icon">🔐</div><h3>Single Sign-On</h3><p>One login for all your monitoring tools. Email/password and GitHub OAuth out of the box.</p></div>
+    <div class="feat"><div class="feat-icon">🌍</div><h3>Edge-first</h3><p>Deploy on Cloudflare Pages or Vercel. Separate from what you monitor — by design.</p></div>
+    <div class="feat"><div class="feat-icon">🔌</div><h3>Config-driven</h3><p>Add routes in a single TypeScript file. No database migrations, no UI clicks required.</p></div>
+    <div class="feat"><div class="feat-icon">🟢</div><h3>Health checks</h3><p>Real-time upstream status on your dashboard. Know immediately when something is down.</p></div>
+    <div class="feat"><div class="feat-icon">🦀</div><h3>Kenari CLI <span class="feat-tag">coming v0.3</span></h3><p>Rust agent for monitored hosts. Sends metrics without exposing inbound ports.</p></div>
+    <div class="feat"><div class="feat-icon">📋</div><h3>Audit log <span class="feat-tag">v0.2</span></h3><p>Who accessed what, when. Full visibility into your team's monitoring activity.</p></div>
   </div>
 </section>
 
-<!-- Architecture -->
-<section>
-  <div class="section-label">Architecture</div>
+<section class="section">
+  <div class="section-tag">Architecture</div>
   <h2>Designed for resilience</h2>
-  <p class="subtitle">Kenari lives on the edge. Your monitoring tools live on your servers. They never need to be in the same place.</p>
-
-  <div class="arch">
-<span class="hl">┌─────────────────────────────────────────────────────┐</span>
-<span class="hl">│              Edge (Cloudflare / Vercel)              │</span>
-<span class="hl">│                                                      │</span>
-<span class="hl">│  ┌──────────────────────────────────────────────┐   │</span>
-<span class="hl">│  │              Kenari Gateway                  │   │</span>
-<span class="hl">│  │         (SvelteKit + Lucia Auth)             │   │</span>
-<span class="hl">│  │                                              │   │</span>
-<span class="green">│  │  /uptime  ──proxy──▶  Uptime Kuma           │   │</span>
-<span class="green">│  │  /grafana ──proxy──▶  Grafana               │   │</span>
-<span class="green">│  │  /custom  ──proxy──▶  Any Tool              │   │</span>
-<span class="hl">│  └──────────────────────────────────────────────┘   │</span>
-<span class="hl">│                        │                            │</span>
-<span class="blue">│                   Turso DB                          │</span>
-<span class="blue">│              (sessions + users)                     │</span>
-<span class="hl">└─────────────────────────────────────────────────────┘</span>
-                         │
-              <span style="color:#6b7280">┌──────────┴──────────┐</span>
-              │                     │
-    <span style="color:#94a3b8">┌─────────────────┐   ┌─────────────────┐</span>
-    <span style="color:#94a3b8">│   Your Server   │   │   Your Server   │</span>
-    <span style="color:#94a3b8">│  Uptime Kuma    │   │    Grafana      │</span>
-    <span style="color:#22c55e">│  kenari-cli 🦀  │   │  kenari-cli 🦀  │</span>
-    <span style="color:#94a3b8">└─────────────────┘   └─────────────────┘</span>
+  <p class="section-sub">Kenari lives on the edge. Your tools live on your servers. They never need to be in the same place.</p>
+  <div class="code-block">
+<span class="ch">┌─────────────────────────────────────────────────────┐</span>
+<span class="ch">│              Edge (Cloudflare / Vercel)              │</span>
+<span class="ch">│  ┌──────────────────────────────────────────────┐   │</span>
+<span class="ch">│  │              Kenari Gateway                  │   │</span>
+<span class="cg">│  │  /uptime  ──proxy──▶  Uptime Kuma           │   │</span>
+<span class="cg">│  │  /grafana ──proxy──▶  Grafana               │   │</span>
+<span class="cg">│  │  /custom  ──proxy──▶  Any Tool              │   │</span>
+<span class="ch">│  └──────────────────────────────────────────────┘   │</span>
+<span class="cb">│                   Turso DB (sessions)               │</span>
+<span class="ch">└─────────────────────────────────────────────────────┘</span>
+                         <span class="cm">│</span>
+              <span class="cm">┌──────────┴──────────┐</span>
+    <span class="cm">┌─────────────────┐   ┌─────────────────┐</span>
+    <span class="cm">│   Your Server   │   │   Your Server   │</span>
+    <span class="cg">│  kenari-cli 🦀  │   │  kenari-cli 🦀  │</span>
+    <span class="cm">└─────────────────┘   └─────────────────┘</span>
   </div>
 </section>
 
-<!-- Roadmap -->
-<section id="roadmap">
-  <div class="section-label">Roadmap</div>
+<section class="section" id="roadmap">
+  <div class="section-tag">Roadmap</div>
   <h2>What's coming</h2>
-  <p class="subtitle">Kenari is actively developed. Here's what's planned.</p>
-
+  <p class="section-sub">Kenari is actively developed. Here's what's planned.</p>
   <div class="roadmap">
-    <div class="rm-phase">
-      <div class="rm-header">
-        <span class="rm-badge rm-current">v0.1 — Current</span>
-        <h3>Gateway Foundation</h3>
-      </div>
-      <div class="rm-items">
-        <div class="rm-item done">SvelteKit 5 + Lucia auth</div>
-        <div class="rm-item done">Proxy routes with auth injection</div>
-        <div class="rm-item done">Dashboard with health checks</div>
-        <div class="rm-item done">Edge + self-hosted deployment</div>
-        <div class="rm-item done">GitHub OAuth</div>
-        <div class="rm-item">First user setup wizard</div>
-        <div class="rm-item">Docker Compose example</div>
+    <div class="rm">
+      <div class="rm-head"><span class="rm-v v-now">v0.1 — Now</span><h3>Gateway</h3></div>
+      <div class="rm-list">
+        <div class="ri done"><div class="ri-dot">✓</div>SvelteKit 5 + Lucia auth</div>
+        <div class="ri done"><div class="ri-dot">✓</div>Proxy with auth injection</div>
+        <div class="ri done"><div class="ri-dot">✓</div>Health check dashboard</div>
+        <div class="ri done"><div class="ri-dot">✓</div>Edge + self-hosted deploy</div>
+        <div class="ri done"><div class="ri-dot">✓</div>GitHub OAuth</div>
+        <div class="ri"><div class="ri-dot">○</div>Setup wizard</div>
+        <div class="ri"><div class="ri-dot">○</div>Docker Compose example</div>
       </div>
     </div>
-
-    <div class="rm-phase">
-      <div class="rm-header">
-        <span class="rm-badge rm-next">v0.2 — Next</span>
-        <h3>Polish & Security</h3>
-      </div>
-      <div class="rm-items">
-        <div class="rm-item">Public status page (no login)</div>
-        <div class="rm-item">Audit log</div>
-        <div class="rm-item">Role-based access (admin / viewer)</div>
-        <div class="rm-item">Notifications (Telegram / email)</div>
-        <div class="rm-item">WebSocket proxy support</div>
+    <div class="rm">
+      <div class="rm-head"><span class="rm-v v-next">v0.2 — Next</span><h3>Polish</h3></div>
+      <div class="rm-list">
+        <div class="ri"><div class="ri-dot">○</div>Public status page</div>
+        <div class="ri"><div class="ri-dot">○</div>Audit log</div>
+        <div class="ri"><div class="ri-dot">○</div>Role-based access</div>
+        <div class="ri"><div class="ri-dot">○</div>Notifications (Telegram)</div>
+        <div class="ri"><div class="ri-dot">○</div>WebSocket proxy</div>
       </div>
     </div>
-
-    <div class="rm-phase">
-      <div class="rm-header">
-        <span class="rm-badge rm-future">v0.3 — Future</span>
-        <h3>Kenari CLI 🦀</h3>
-      </div>
-      <div class="rm-items">
-        <div class="rm-item">Rust agent for monitored hosts</div>
-        <div class="rm-item">CPU, memory, disk, network metrics</div>
-        <div class="rm-item">Push-only (no inbound ports)</div>
-        <div class="rm-item">systemd service integration</div>
-        <div class="rm-item">Custom metrics via plugins</div>
+    <div class="rm">
+      <div class="rm-head"><span class="rm-v v-future">v0.3 — Future</span><h3>Kenari CLI 🦀</h3></div>
+      <div class="rm-list">
+        <div class="ri"><div class="ri-dot">○</div>Rust agent for hosts</div>
+        <div class="ri"><div class="ri-dot">○</div>CPU, memory, disk metrics</div>
+        <div class="ri"><div class="ri-dot">○</div>Push-only, no inbound ports</div>
+        <div class="ri"><div class="ri-dot">○</div>systemd integration</div>
+        <div class="ri"><div class="ri-dot">○</div>Custom metric plugins</div>
       </div>
     </div>
   </div>
 </section>
 
-<!-- CTA -->
-<div class="cta-section">
+<div class="cta">
+  <div class="cta-glow"></div>
   <h2>Ready to deploy?</h2>
-  <p>Kenari is open source and free forever. Deploy in minutes.</p>
-  <div class="cta-buttons">
-    <a href="https://github.com/sandikodev/kenari" class="btn-hero" target="_blank">⭐ Star on GitHub</a>
-    <a href="https://github.com/sandikodev/kenari#quick-start" class="btn-outline" target="_blank">Read the docs →</a>
+  <p>Open source. Free forever. Deploy in minutes.</p>
+  <div class="cta-btns">
+    <a href="https://github.com/sandikodev/kenari" class="btn-primary" target="_blank">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
+      Star on GitHub
+    </a>
+    <a href="https://github.com/sandikodev/kenari#quick-start" class="btn-ghost" target="_blank">Read the docs →</a>
   </div>
 </div>
 
-<!-- Footer -->
 <footer>
-  <p>
-    <strong>Kenari</strong> — A canary for your monitoring gateway ·
-    <a href="https://github.com/sandikodev/kenari" target="_blank">GitHub</a> ·
-    <a href="https://github.com/sandikodev/kenari/blob/main/LICENSE" target="_blank">MIT License</a> ·
-    Built with ❤️ in Yogyakarta, Indonesia by
+  <div class="footer-left"><strong>Kenari</strong> — A canary for your monitoring gateway · Built with ❤️ in Yogyakarta, Indonesia</div>
+  <div class="footer-right">
+    <a href="https://github.com/sandikodev/kenari" target="_blank">GitHub</a>
+    <a href="https://github.com/sandikodev/kenari/blob/main/LICENSE" target="_blank">MIT</a>
     <a href="https://github.com/sandikodev" target="_blank">@sandikodev</a>
-  </p>
+  </div>
 </footer>
 
 </body>
