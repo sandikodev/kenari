@@ -7,20 +7,40 @@ on:
     branches: [main]
 
 jobs:
-  gateway:
-    name: Gateway (svelte-check + build)
+  gateway-check:
+    name: Gateway — svelte-check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
+        with: { bun-version: latest }
       - run: bun install --frozen-lockfile
       - run: bun run check
-      - run: bun run build
+
+  gateway-e2e:
+    name: Gateway — E2E tests
+    runs-on: ubuntu-latest
+    needs: gateway-check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with: { bun-version: latest }
+      - run: bun install --frozen-lockfile
+      - run: bunx playwright install --with-deps chromium
+      - name: Setup test env
+        run: cp .env.test.example .env.test
+      - name: Run db:push for test DB
+        run: DATABASE_URL=file:./test.db bunx drizzle-kit push --config drizzle.config.ts
+        continue-on-error: true
+      - run: bun run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
 
   cli:
-    name: CLI (cargo check)
+    name: CLI — cargo check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

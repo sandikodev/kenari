@@ -1,6 +1,27 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
-	webServer: { command: 'npm run build && npm run preview', port: 4173 },
-	testMatch: '**/*.e2e.{ts,js}'
+	testDir: './e2e',
+	testMatch: '**/*.test.ts',
+	fullyParallel: false, // sequential — tests share DB state
+	retries: 0,
+	workers: 1,
+	reporter: 'list',
+
+	use: {
+		baseURL: 'http://localhost:5173',
+		trace: 'on-first-retry',
+	},
+
+	// Run dev server before tests
+	webServer: {
+		command: 'bun --env-file=.env.test run dev',
+		url: 'http://localhost:5173',
+		reuseExistingServer: true,
+		timeout: 30_000,
+	},
+
+	projects: [
+		{ name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+	],
 });

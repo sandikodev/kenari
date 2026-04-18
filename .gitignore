@@ -28,3 +28,7 @@ vite.config.ts.timestamp-*
 test-results
 # SQLite
 *.db
+.env.test
+test.db
+test-results/
+playwright-report/

@@ -57,7 +57,9 @@
 		"deploy": "bash scripts/deploy.sh",
 		"deploy:all": "bash scripts/deploy-all.sh",
 		"logs": "bash scripts/logs.sh",
-		"logs:all": "bash scripts/logs.sh --all"
+		"logs:all": "bash scripts/logs.sh --all",
+		"test:e2e:ui": "playwright test --ui",
+		"test:e2e:debug": "playwright test --debug"
 	},
 	"type": "module",
 	"dependencies": {
