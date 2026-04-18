@@ -9,7 +9,7 @@
 <div class="min-h-screen bg-black text-white flex items-center justify-center px-4">
 	<div class="w-full max-w-sm">
 		<div class="text-center mb-8">
-			<div class="text-3xl mb-3">🐦</div>
+			<img src="/favicon.svg" class="w-12 h-12 mx-auto mb-3" alt="Kenari">
 			<h1 class="text-xl font-bold">Kenari</h1>
 			<p class="text-white/30 text-sm mt-1">Sign in to your monitoring gateway</p>
 		</div>

@@ -10,7 +10,7 @@
 	<div class="flex-1 flex flex-col items-center justify-center px-6 py-16">
 		<div class="w-full max-w-2xl">
 			<div class="text-center mb-12">
-				<div class="text-4xl mb-4 select-none">🐦</div>
+				<img src="/favicon.svg" class="w-12 h-12 mx-auto mb-4" alt="Kenari">
 				<div class={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold mb-4 ${data.allOnline ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
 					<span class={`w-2 h-2 rounded-full ${data.allOnline ? 'bg-green-400' : 'bg-red-400'}`}></span>
 					{data.allOnline ? 'All systems operational' : 'Degraded performance'}

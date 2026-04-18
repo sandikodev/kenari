@@ -1,6 +1,7 @@
 <script lang="ts">
 	import './layout.css';
 	import { onMount } from 'svelte';
+	import InstallPrompt from '$lib/components/InstallPrompt.svelte';
 
 	let { children } = $props();
 	let ready = $state(false);
@@ -18,7 +19,7 @@
 {#if !ready}
 	<div class="splash">
 		<div class="splash-inner">
-			<div class="bird">🐦</div>
+			<div class="bird"><img src="/favicon.svg" style="width:5rem;height:5rem;filter:drop-shadow(0 8px 32px rgba(14,165,233,0.5))" alt=""></div>
 			<div class="wordmark">Kenari</div>
 			<div class="bar"><div class="bar-fill"></div></div>
 		</div>
@@ -28,6 +29,8 @@
 <div class="app" class:visible={ready}>
 	{@render children()}
 </div>
+
+<InstallPrompt />
 
 <style>
 	.splash {
@@ -42,8 +45,7 @@
 	.bird {
 		font-size: 3rem; line-height: 1;
 		animation: drop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
-	}
-	.wordmark {
+	}	.wordmark {
 		font-family: -apple-system, BlinkMacSystemFont, sans-serif;
 		font-size: 1.25rem; font-weight: 700; color: #fff; letter-spacing: -0.03em;
 		animation: fadeUp 0.4s ease 0.2s both;
@@ -54,7 +56,7 @@
 		animation: fadeUp 0.4s ease 0.3s both;
 	}
 	.bar-fill {
-		height: 100%; width: 0; background: #f59e0b; border-radius: 2px;
+		height: 100%; width: 0; background: #0ea5e9; border-radius: 2px;
 		animation: load 0.7s ease 0.3s forwards;
 	}
 	.app {

@@ -1,22 +1,27 @@
 <script lang="ts">
+	import { page } from '$app/stores';
 	let { user, children }: { user: { name: string; role: string } | null; children: any } = $props();
 	let open = $state(false);
+
+	const isActive = (path: string) => $page.url.pathname === path;
 </script>
 
 <svelte:window on:click={() => (open = false)} />
 
 <div class="min-h-screen bg-black text-white flex flex-col">
-	<nav class="border-b border-white/8 px-6 h-14 flex items-center justify-between sticky top-0 bg-black/80 backdrop-blur z-50">
-		<div class="flex items-center gap-6">
-			<a href="/" class="flex items-center gap-2 font-semibold text-sm">
-				<span>🐦</span> Kenari
+
+	<!-- Desktop nav -->
+	<nav class="border-b border-white/8 px-5 h-14 hidden sm:flex items-center justify-between sticky top-0 bg-black/80 backdrop-blur z-50">
+		<div class="flex items-center gap-5">
+			<a href="/" class="flex items-center gap-2 font-semibold text-sm shrink-0">
+				<img src="/favicon.svg" class="w-5 h-5" alt=""> Kenari
 			</a>
 			{#if user}
-				<div class="hidden sm:flex items-center gap-1">
-					<a href="/" class="text-xs text-white/50 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition">Dashboard</a>
-					<a href="/status" class="text-xs text-white/50 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition">Status</a>
+				<div class="flex items-center gap-0.5">
+					<a href="/" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Dashboard</a>
+					<a href="/status" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/status') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Status</a>
 					{#if user.role === 'admin'}
-						<a href="/admin" class="text-xs text-white/50 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/5 transition">Admin</a>
+						<a href="/admin" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/admin') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Admin</a>
 					{/if}
 				</div>
 			{/if}
@@ -24,47 +29,36 @@
 
 		{#if user}
 			<div class="relative">
-				<button
-					on:click|stopPropagation={() => (open = !open)}
-					class="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-white/5 transition"
-				>
-					<div class="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-xs font-bold">
+				<button on:click|stopPropagation={() => (open = !open)}
+					class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/5 transition">
+					<div class="w-6 h-6 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold shrink-0">
 						{user.name[0].toUpperCase()}
 					</div>
-					<span class="text-sm hidden sm:block">{user.name}</span>
+					<span class="text-sm">{user.name}</span>
 					{#if user.role === 'admin'}
-						<span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full hidden sm:block">admin</span>
+						<span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full">admin</span>
 					{/if}
-					<svg class={`w-3.5 h-3.5 text-white/30 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+					<svg class={`w-3 h-3 text-white/20 transition-transform ${open ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/>
 					</svg>
 				</button>
 
 				{#if open}
-					<div class="absolute right-0 top-full mt-2 w-52 bg-[#111] border border-white/10 rounded-xl shadow-xl overflow-hidden z-50">
+					<div class="absolute right-0 top-full mt-2 w-48 bg-[#111] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
 						<div class="px-4 py-3 border-b border-white/8">
-							<div class="text-sm font-medium">{user.name}</div>
+							<div class="text-sm font-semibold">{user.name}</div>
 							<div class="text-xs text-white/30 mt-0.5 capitalize">{user.role}</div>
 						</div>
-						<div class="p-1">
-							<a href="/status" class="flex items-center gap-2.5 px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition">
-								<span class="text-base">🟢</span> Status Page
-							</a>
+						<div class="p-1.5 flex flex-col gap-0.5">
+							<a href="/status" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">Status Page</a>
 							{#if user.role === 'admin'}
-								<a href="/admin" class="flex items-center gap-2.5 px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition">
-									<span class="text-base">⚙️</span> Admin
-								</a>
+								<a href="/admin" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">Admin</a>
 							{/if}
-							<a href="https://github.com/sandikodev/kenari" target="_blank" class="flex items-center gap-2.5 px-3 py-2 text-sm text-white/60 hover:text-white hover:bg-white/5 rounded-lg transition">
-								<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.63-5.37-12-12-12z"/></svg>
-								GitHub
-							</a>
+							<a href="https://github.com/sandikodev/kenari" target="_blank" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">GitHub</a>
 						</div>
-						<div class="p-1 border-t border-white/8">
+						<div class="p-1.5 border-t border-white/8">
 							<form method="POST" action="/logout">
-								<button class="flex items-center gap-2.5 w-full px-3 py-2 text-sm text-red-400/70 hover:text-red-400 hover:bg-red-500/5 rounded-lg transition">
-									<span class="text-base">↩</span> Sign out
-								</button>
+								<button class="w-full text-left px-3 py-2 text-sm text-red-400/60 hover:text-red-400 hover:bg-red-500/5 rounded-lg transition">Sign out</button>
 							</form>
 						</div>
 					</div>
@@ -72,10 +66,69 @@
 			</div>
 		{/if}
 	</nav>
-	<main class="flex-1">
+
+	<!-- Mobile top bar -->
+	<header class="sm:hidden border-b border-white/8 px-4 h-12 flex items-center justify-between sticky top-0 bg-black/90 backdrop-blur z-50">
+		<a href="/" class="flex items-center gap-2 font-semibold text-sm">
+			<img src="/favicon.svg" class="w-5 h-5" alt=""> Kenari
+		</a>
+		{#if user}
+			<div class="flex items-center gap-2">
+				{#if user.role === 'admin'}
+					<span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full">admin</span>
+				{/if}
+				<div class="w-7 h-7 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
+					{user.name[0].toUpperCase()}
+				</div>
+			</div>
+		{/if}
+	</header>
+
+	<!-- Content -->
+	<main class="flex-1 pb-20 sm:pb-0">
 		{@render children()}
 	</main>
-	<footer class="border-t border-white/5 py-3 text-center text-xs text-white/15">
+
+	<!-- Desktop footer -->
+	<footer class="hidden sm:block border-t border-white/5 py-3 text-center text-xs text-white/15">
 		Powered by <a href="https://github.com/sandikodev/kenari" target="_blank" class="hover:text-white/40 transition">Kenari</a>
 	</footer>
+
+	<!-- Mobile bottom nav -->
+	{#if user}
+		<nav class="sm:hidden fixed bottom-0 inset-x-0 z-50 bg-black/90 backdrop-blur border-t border-white/8"
+			style="padding-bottom: env(safe-area-inset-bottom)">
+			<div class="flex items-center">
+				<a href="/" class={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition ${isActive('/') ? 'text-white' : 'text-white/30'}`}>
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+					</svg>
+					Dashboard
+				</a>
+				<a href="/status" class={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition ${isActive('/status') ? 'text-white' : 'text-white/30'}`}>
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+					</svg>
+					Status
+				</a>
+				{#if user.role === 'admin'}
+					<a href="/admin" class={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition ${isActive('/admin') ? 'text-white' : 'text-white/30'}`}>
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+							<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+						</svg>
+						Admin
+					</a>
+				{/if}
+				<form method="POST" action="/logout" class="flex-1">
+					<button class="w-full flex flex-col items-center gap-1 py-3 text-xs text-white/30 hover:text-red-400 transition">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
+							<path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+						</svg>
+						Sign out
+					</button>
+				</form>
+			</div>
+		</nav>
+	{/if}
 </div>

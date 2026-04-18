@@ -39,6 +39,27 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	const db = getDb();
 	const lucia = getLucia();
 
+	// Whitelist check — GITHUB_ALLOWED_USERS and/or GITHUB_ALLOWED_ORGS
+	const allowedUsers = (env.GITHUB_ALLOWED_USERS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+	const allowedOrgs = (env.GITHUB_ALLOWED_ORGS ?? '').split(',').map((s) => s.trim()).filter(Boolean);
+
+	if (allowedUsers.length > 0 || allowedOrgs.length > 0) {
+		const loginAllowed = allowedUsers.includes(ghUser.login);
+		let orgAllowed = false;
+
+		if (!loginAllowed && allowedOrgs.length > 0) {
+			const orgs: { login: string }[] = await fetch('https://api.github.com/user/orgs', {
+				headers: { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'kenari' }
+			}).then((r) => r.json());
+			orgAllowed = orgs.some((o) => allowedOrgs.includes(o.login));
+		}
+
+		if (!loginAllowed && !orgAllowed) {
+			await log('login', `blocked: ${ghUser.login}`, null);
+			error(403, 'Access denied. Your GitHub account is not allowed.');
+		}
+	}
+
 	// Find or create user
 	let user = await db.query.users.findFirst({ where: eq(users.githubId, String(ghUser.id)) });
 

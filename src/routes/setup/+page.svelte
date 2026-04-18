@@ -7,7 +7,7 @@
 <div class="min-h-screen bg-black text-white flex items-center justify-center px-4">
 	<div class="w-full max-w-sm">
 		<div class="text-center mb-8">
-			<div class="text-4xl mb-3">🐦</div>
+			<img src="/favicon.svg" class="w-12 h-12 mx-auto mb-3" alt="Kenari">
 			<h1 class="text-xl font-bold">Welcome to Kenari</h1>
 			<p class="text-white/40 text-sm mt-1">Create your admin account to get started</p>
 		</div>
