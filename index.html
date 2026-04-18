@@ -6,6 +6,8 @@
 <title>Kenari — A canary for your monitoring gateway</title>
 <meta name="description" content="Open source SSO gateway for your monitoring tools. One login, all your dashboards.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐦</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -109,7 +111,7 @@ nav{
 .dot{width:11px;height:11px;border-radius:50%}
 .dr{background:#ff5f57}.dy{background:#febc2e}.dg{background:#28c840}
 .term-url{margin-left:8px;color:var(--subtle);font-size:.78rem;font-family:monospace}
-.term-body{padding:20px 24px;font-family:'SF Mono','Fira Code',monospace;font-size:.82rem;line-height:2}
+.term-body{padding:20px 24px;font-family:'JetBrains Mono',monospace;font-size:.82rem;line-height:2;white-space:pre}
 .tc{color:#333}.tk{color:var(--amber)}.to{color:var(--green)}.tu{color:#60a5fa}.td{color:#555}
 
 /* ── Section ── */
@@ -144,8 +146,8 @@ nav{
 .code-block{
   background:#0a0a0a;border:1px solid var(--border);
   border-radius:16px;padding:28px 32px;
-  font-family:'SF Mono','Fira Code',monospace;font-size:.82rem;
-  line-height:1.9;overflow-x:auto;color:#666;
+  font-family:'JetBrains Mono',monospace;font-size:.82rem;
+  line-height:1.9;overflow-x:auto;color:#666;white-space:pre;
 }
 .ch{color:var(--amber)}.cg{color:var(--green)}.cb{color:var(--blue)}.cm{color:#888}
 
@@ -229,18 +231,16 @@ footer{
       <div class="dot dr"></div><div class="dot dy"></div><div class="dot dg"></div>
       <span class="term-url">monitor.yourdomain.com</span>
     </div>
-    <div class="term-body">
-      <div class="tc"># Deploy on Cloudflare Pages in minutes</div>
-      <div class="tk">$ git clone github.com/sandikodev/kenari</div>
-      <div class="tk">$ bun install && bun run build:edge</div>
-      <br>
-      <div class="to">✓ Authenticated · admin@yourdomain.com</div>
-      <br>
-      <div class="td">Available dashboards</div>
-      <div class="to">  🟢 Uptime Kuma  <span class="tu">→ /uptime</span></div>
-      <div class="to">  📊 Grafana      <span class="tu">→ /grafana</span></div>
-      <div class="to">  🔍 Custom       <span class="tu">→ /custom</span></div>
-    </div>
+    <div class="term-body"><span class="tc"># Deploy on Cloudflare Pages in minutes</span>
+<span class="tk">$ git clone github.com/sandikodev/kenari</span>
+<span class="tk">$ bun install && bun run build:edge</span>
+
+<span class="to">✓ Authenticated · admin@yourdomain.com</span>
+
+<span class="td">Available dashboards</span>
+<span class="to">  🟢 Uptime Kuma  <span class="tu">→ /uptime</span></span>
+<span class="to">  📊 Grafana      <span class="tu">→ /grafana</span></span>
+<span class="to">  🔍 Custom       <span class="tu">→ /custom</span></span></div>
   </div>
 </section>
 
