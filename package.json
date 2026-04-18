@@ -48,11 +48,15 @@
 		"test": "npm run test:unit -- --run && npm run test:e2e",
 		"test:e2e": "playwright test",
 		"db:push": "bun --env-file=.env.local run drizzle-kit push",
-		"db:push:prod": "bun --env-file=.env.production run drizzle-kit push",
+		"db:push:prod": "bash scripts/db-migrate-prod.sh",
 		"db:generate": "bun --env-file=.env.local run drizzle-kit generate",
 		"db:migrate": "bun --env-file=.env.local run drizzle-kit migrate",
 		"db:studio": "bun --env-file=.env.local run drizzle-kit studio",
-		"db:drop": "bun --env-file=.env.local run drizzle-kit drop"
+		"db:drop": "bun --env-file=.env.local run drizzle-kit drop",
+		"deploy": "bash scripts/deploy.sh",
+		"deploy:all": "bash scripts/deploy-all.sh",
+		"logs": "bash scripts/logs.sh",
+		"logs:all": "bash scripts/logs.sh --all"
 	},
 	"type": "module",
 	"dependencies": {

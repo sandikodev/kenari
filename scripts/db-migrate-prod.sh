@@ -1,14 +1,31 @@
 #!/usr/bin/env bash
-# kenari db:migrate:prod — apply schema migrations inside running container
+# kenari db:migrate:prod — apply schema migrations inside running gateway container
+# Usage: ./scripts/db-migrate-prod.sh [container-name] [db-path]
+#   container-name: default = auto-detect from running containers
+#   db-path:        default = file:/app/data/monitor.db
 set -e
-CONTAINER="kenari-gateway"
 
-docker inspect "$CONTAINER" &>/dev/null || { echo "✗ $CONTAINER not running"; exit 1; }
+# Auto-detect container: prefer arg, then look for running container with 'kenari' or 'gateway' in name
+if [ -n "$1" ]; then
+  CONTAINER="$1"
+else
+  CONTAINER=$(docker ps --format '{{.Names}}' | grep -E 'kenari|gateway' | head -1)
+fi
 
-echo "→ Running migrations..."
+DB_PATH="${2:-file:/app/data/monitor.db}"
+
+[ -z "$CONTAINER" ] && echo "✗ No running container found. Pass container name as first argument." && exit 1
+
+docker inspect "$CONTAINER" &>/dev/null || { echo "✗ Container '$CONTAINER' not found or not running"; exit 1; }
+
+echo "🐦 Kenari DB Migration"
+echo "   Container : $CONTAINER"
+echo "   Database  : $DB_PATH"
+echo ""
+
 docker exec "$CONTAINER" node -e "
 const {createClient} = require('@libsql/client');
-const db = createClient({url:'file:/app/data/monitor.db'});
+const db = createClient({url:'${DB_PATH}'});
 const migrations = [
   'CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT NOT NULL, password_hash TEXT, github_id TEXT UNIQUE, avatar_url TEXT, role TEXT NOT NULL DEFAULT \"viewer\", created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS sessions (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires_at INTEGER NOT NULL)',
