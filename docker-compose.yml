@@ -6,7 +6,9 @@ services:
     image: ***REMOVED***-monitor:latest
     container_name: ***REMOVED***-monitor-gateway
     restart: unless-stopped
-    env_file: .env
+    env_file: .env.production
+    volumes:
+      - gateway-data:/app/data
     depends_on: [kuma, grafana]
     networks: [nginx-net, monitor-net]
     logging:
@@ -24,7 +26,7 @@ services:
 
   # ── Grafana ───────────────────────────────────────────────────────────────
   grafana:
-    image: grafana/grafana:11-ubuntu
+    image: grafana/grafana:latest
     container_name: ***REMOVED***-monitor-grafana
     restart: unless-stopped
     environment:
@@ -41,6 +43,7 @@ services:
     networks: [monitor-net]
 
 volumes:
+  gateway-data:
   kuma-data:
   grafana-data:
 
