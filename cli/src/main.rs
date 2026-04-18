@@ -1,51 +1,73 @@
 use clap::{Parser, Subcommand};
 
 mod commands;
-mod metrics;
 mod config;
+mod init;
+mod metrics;
+mod ui;
 
 #[derive(Parser)]
-#[command(name = "kenari", about = "A canary for your monitoring gateway", version)]
+#[command(
+    name = "kenari",
+    about = "🐦 A canary for your monitoring gateway",
+    long_about = "Kenari agent — monitors your host and pushes metrics to your Kenari gateway.\n\nGet started: kenari register",
+    version
+)]
 struct Cli {
     #[command(subcommand)]
-    command: Commands,
+    command: Option<Commands>,
 }
 
 #[derive(Subcommand)]
 enum Commands {
-    /// Register this host with a Kenari gateway
+    /// Interactive setup wizard — register this host with a gateway
     Register {
-        #[arg(long)] gateway: String,
-        #[arg(long)] token: String,
-        #[arg(long, default_value_t = hostname())] name: String,
+        /// Gateway URL (prompted if omitted)
+        #[arg(long)]
+        gateway: Option<String>,
+        /// Agent token from the gateway UI (prompted if omitted)
+        #[arg(long)]
+        token: Option<String>,
+        /// Host name (defaults to system hostname)
+        #[arg(long)]
+        name: Option<String>,
     },
-    /// Start the agent (push metrics loop)
+
+    /// Diagnose system health and configuration
+    Doctor {
+        /// Automatically fix detected issues
+        #[arg(long, short)]
+        fix: bool,
+    },
+
+    /// Show current system metrics
+    Status,
+
+    /// Push a one-time metric snapshot to the gateway
+    Push,
+
+    /// Manage the background agent service
     Agent {
         #[command(subcommand)]
         action: commands::agent::AgentAction,
     },
-    /// Push a one-time metric snapshot
-    Push,
-    /// Show current metrics
-    Status,
-}
-
-fn hostname() -> String {
-    std::fs::read_to_string("/etc/hostname")
-        .unwrap_or_default()
-        .trim()
-        .to_string()
 }
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
+
     match cli.command {
-        Commands::Register { gateway, token, name } => {
+        None => {
+            // No subcommand — show friendly onboarding
+            commands::onboard::run().await
+        }
+        Some(Commands::Register { gateway, token, name }) => {
             commands::register::run(gateway, token, name).await
         }
-        Commands::Agent { action } => commands::agent::run(action).await,
-        Commands::Push => commands::push::run().await,
-        Commands::Status => commands::status::run(),
+        Some(Commands::Doctor { fix }) => commands::doctor::run(fix).await,
+        Some(Commands::Status) => commands::status::run(),
+        Some(Commands::Push) => commands::push::run().await,
+        Some(Commands::Agent { action }) => commands::agent::run(action).await,
     }
 }
