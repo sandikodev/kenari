@@ -75,4 +75,7 @@
 	<main class="flex-1">
 		{@render children()}
 	</main>
+	<footer class="border-t border-white/5 py-3 text-center text-xs text-white/15">
+		Powered by <a href="https://github.com/sandikodev/kenari" target="_blank" class="hover:text-white/40 transition">Kenari</a>
+	</footer>
 </div>
