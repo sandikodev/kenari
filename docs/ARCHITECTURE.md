@@ -10,6 +10,17 @@ and how all components fit together.
 1. [Overview](#1-overview)
 2. [Component Map](#2-component-map)
 3. [Data Flow](#3-data-flow)
+4. [Network Communication — How It Actually Works](#4-network-communication--how-it-actually-works)
+5. [Do I Need a Public IP?](#5-do-i-need-a-public-ip)
+6. [Technology Decisions](#6-technology-decisions)
+7. [Authentication Architecture](#7-authentication-architecture)
+8. [Proxy Architecture](#8-proxy-architecture)
+9. [Agent Architecture](#9-agent-architecture)
+10. [Database Schema](#10-database-schema)
+11. [Deployment Targets](#11-deployment-targets)
+12. [Security Boundaries](#12-security-boundaries)
+2. [Component Map](#2-component-map)
+3. [Data Flow](#3-data-flow)
 4. [Technology Decisions](#4-technology-decisions)
 5. [Authentication Architecture](#5-authentication-architecture)
 6. [Proxy Architecture](#6-proxy-architecture)
@@ -131,7 +142,254 @@ kenari-cli → POST /api/agent/push
 
 ---
 
-## 4. Technology Decisions
+## 4. Network Communication — How It Actually Works
+
+Ini adalah bagian yang paling sering ditanyakan: **bagaimana agent bisa
+mengirim data ke gateway jika keduanya berada di jaringan yang berbeda?**
+
+### Gambaran Besar
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          INTERNET / WAN                                  │
+└─────────────────────────────────────────────────────────────────────────┘
+         ▲                                          ▲
+         │ HTTPS (inbound)                          │ HTTPS (outbound)
+         │ port 443                                 │ port 443
+         │                                          │
+┌────────┴────────────────┐              ┌──────────┴──────────────────┐
+│   Kenari Gateway        │              │   Monitored Host            │
+│   (Edge / VPS)          │              │   (Server, Pi, Router, etc) │
+│                         │              │                             │
+│   PUBLIC IP ✅          │              │   NO public IP needed ✅    │
+│   domain: monitor.x.com │              │   Behind NAT: OK ✅         │
+│                         │              │   Behind firewall: OK ✅    │
+│   Receives metrics      │◄─────────────│   kenari-cli PUSHES metrics │
+│   from all agents       │   HTTPS POST │   to gateway                │
+└─────────────────────────┘   /api/agent │                             │
+                               /push     └─────────────────────────────┘
+```
+
+### Prinsip Kunci: Push, Bukan Pull
+
+Kenari menggunakan model **push** — agent yang mengirim data ke gateway,
+bukan gateway yang mengambil data dari agent.
+
+```
+❌ Pull model (TIDAK digunakan Kenari):
+   Gateway → "Hei agent, kirim metrics kamu"
+   Agent   → "Ini metricsnya"
+   
+   Masalah: Gateway harus bisa reach agent
+            Agent harus punya IP publik atau port forwarding
+            Firewall harus dibuka untuk inbound connection
+
+✅ Push model (yang digunakan Kenari):
+   Agent   → POST https://monitor.yourdomain.com/api/agent/push
+   Gateway → "Terima kasih, data tersimpan"
+   
+   Keuntungan: Agent hanya butuh akses HTTPS outbound (port 443)
+               Tidak perlu IP publik di sisi agent
+               Tidak perlu buka port di firewall
+               Tidak perlu port forwarding di router
+```
+
+### Alur Komunikasi Detail
+
+```
+kenari-cli (agent)                    Kenari Gateway
+      │                                     │
+      │  1. Baca config                     │
+      │     ~/.config/kenari/config.toml    │
+      │     gateway = "https://..."         │
+      │     token   = "abc123..."           │
+      │                                     │
+      │  2. Kumpulkan metrics               │
+      │     CPU, memory, disk, uptime       │
+      │                                     │
+      │  3. POST /api/agent/push ──────────►│
+      │     Authorization: Bearer abc123    │
+      │     Content-Type: application/json  │
+      │     {                               │
+      │       "host_id": "server1",         │
+      │       "timestamp": 1776536079,      │
+      │       "metrics": {                  │
+      │         "cpu_percent": 12.3,        │
+      │         "memory_used_mb": 1024,     │
+      │         ...                         │
+      │       }                             │
+      │     }                               │
+      │                                     │  4. Validasi token
+      │                                     │     SELECT * FROM agents
+      │                                     │     WHERE token = 'abc123'
+      │                                     │
+      │                                     │  5. Simpan ke DB
+      │                                     │     INSERT INTO agent_metrics
+      │                                     │     UPDATE agents SET last_seen
+      │                                     │
+      │◄────────────────────────────────────│  6. Response
+      │     HTTP 200 { "ok": true }         │
+      │                                     │
+      │  7. Tunggu N detik (default: 30s)   │
+      │                                     │
+      │  8. Ulangi dari langkah 2           │
+      │                                     │
+```
+
+### Diagram Mermaid
+
+```mermaid
+sequenceDiagram
+    participant A as kenari-cli (Agent)
+    participant G as Kenari Gateway
+    participant D as Database
+
+    loop Every 30 seconds
+        A->>A: Collect metrics (CPU, mem, disk)
+        A->>G: POST /api/agent/push<br/>Bearer: agent-token
+        G->>D: SELECT agent WHERE token=?
+        D-->>G: Agent found
+        G->>D: INSERT agent_metrics
+        G->>D: UPDATE agents SET last_seen
+        G-->>A: 200 OK { ok: true }
+    end
+
+    Note over A,G: All communication over HTTPS (TLS 1.2+)
+    Note over A: No inbound ports required
+    Note over A: Works behind NAT/firewall
+```
+
+### Port yang Dibutuhkan
+
+```
+Kenari Gateway (server yang menjalankan gateway):
+  INBOUND  443/tcp  ← HTTPS dari browser user dan dari agent
+  INBOUND   80/tcp  ← HTTP redirect ke HTTPS
+  OUTBOUND  443/tcp → GitHub OAuth, Telegram API
+
+Monitored Host (server yang dimonitor, menjalankan kenari-cli):
+  INBOUND   —       ← TIDAK ADA yang dibutuhkan
+  OUTBOUND  443/tcp → Kenari Gateway (HTTPS push)
+
+Browser (user yang mengakses dashboard):
+  OUTBOUND  443/tcp → Kenari Gateway
+```
+
+---
+
+## 5. Do I Need a Public IP?
+
+Pertanyaan yang sangat umum. Jawabannya tergantung pada **peran** masing-masing komponen.
+
+### Kenari Gateway
+
+**Ya, gateway harus bisa diakses dari internet** — baik via IP publik langsung
+maupun via domain yang di-resolve ke IP publik.
+
+Opsi deployment gateway:
+
+```
+Opsi A: VPS dengan IP publik (paling umum)
+  ┌─────────────────────────────────┐
+  │  VPS (DigitalOcean, Vultr, dll) │
+  │  IP: 1.2.3.4 (publik)          │
+  │  Domain: monitor.yourdomain.com │
+  │  → A record: 1.2.3.4           │
+  └─────────────────────────────────┘
+
+Opsi B: Cloudflare Pages (edge, gratis)
+  ┌─────────────────────────────────┐
+  │  Cloudflare Pages               │
+  │  IP: dikelola Cloudflare        │
+  │  Domain: monitor.yourdomain.com │
+  │  → CNAME ke pages.dev           │
+  └─────────────────────────────────┘
+  Catatan: Database harus Turso (remote libSQL)
+           karena tidak ada filesystem di edge
+
+Opsi C: Rumah/kantor dengan dynamic IP + Cloudflare Tunnel
+  ┌─────────────────────────────────┐
+  │  Server lokal (tidak ada IP     │
+  │  publik, di balik NAT)          │
+  │  + cloudflared tunnel           │
+  │  → Cloudflare menangani routing │
+  └─────────────────────────────────┘
+  Catatan: Gratis untuk personal use
+```
+
+### Monitored Host (kenari-cli)
+
+**Tidak, agent TIDAK membutuhkan IP publik sama sekali.**
+
+```
+Skenario yang semua bisa jalan:
+
+✅ Server di datacenter dengan IP publik
+✅ Server di belakang NAT (IP lokal 192.168.x.x)
+✅ Raspberry Pi di jaringan rumah
+✅ Router OpenWRT di warnet
+✅ Laptop di jaringan kantor
+✅ Android di jaringan WiFi
+✅ Server di jaringan sekolah tanpa IP publik
+✅ Perangkat IoT di jaringan lokal
+
+Syarat satu-satunya: bisa akses HTTPS outbound ke gateway
+(port 443 keluar — hampir semua jaringan mengizinkan ini)
+```
+
+### Skenario Nyata: Sekolah Tanpa IP Publik
+
+```
+Jaringan Sekolah (192.168.1.0/24)
+┌─────────────────────────────────────────────────────┐
+│                                                      │
+│  Server Sekolah          Router/Modem                │
+│  192.168.1.10            192.168.1.1                 │
+│  ┌──────────────┐        ┌──────────────┐            │
+│  │ kenari-cli   │        │ NAT          │            │
+│  │              │──────► │              │──► Internet│
+│  │ PUSH metrics │        │ port 443 out │            │
+│  └──────────────┘        └──────────────┘            │
+│                                                      │
+└─────────────────────────────────────────────────────┘
+                                │
+                                │ HTTPS (outbound only)
+                                ▼
+                    ┌───────────────────────┐
+                    │  Kenari Gateway       │
+                    │  (Cloudflare Pages    │
+                    │   atau VPS)           │
+                    │  monitor.sekolah.sch.id│
+                    └───────────────────────┘
+                                │
+                    ┌───────────▼───────────┐
+                    │  Dashboard            │
+                    │  Diakses guru/admin   │
+                    │  dari browser mana pun│
+                    └───────────────────────┘
+```
+
+### Kenapa Ini Penting untuk Keamanan
+
+Model push dengan gateway di edge bukan hanya soal kemudahan — ini adalah
+keputusan keamanan yang disengaja:
+
+```
+Jika gateway dikompromis:
+  ✓ Attacker TIDAK bisa reach monitored hosts
+  ✓ Attacker hanya bisa lihat metrics yang sudah dikirim
+  ✓ Attacker tidak tahu IP/lokasi monitored hosts
+  ✓ Monitored hosts tetap aman
+
+Jika monitored host dikompromis:
+  ✓ Attacker TIDAK bisa reach gateway dari dalam host
+    (gateway hanya menerima push, tidak membuka koneksi balik)
+  ✓ Attacker bisa stop agent, tapi gateway akan detect "offline"
+  ✓ Gateway dan dashboard tetap berjalan normal
+
+Ini adalah prinsip "blast radius minimization" —
+kerusakan di satu komponen tidak menjalar ke komponen lain.
+```
 
 ### SvelteKit 5 (not Next.js, Nuxt, Remix)
 
@@ -180,7 +438,7 @@ build-time processing — no PostCSS config, no separate build step.
 
 ---
 
-## 5. Authentication Architecture
+## 7. Authentication Architecture
 
 Kenari uses **Lucia v3** for session management with two authentication methods:
 
@@ -224,7 +482,7 @@ returns HTTP 429 before even checking credentials.
 
 ---
 
-## 6. Proxy Architecture
+## 8. Proxy Architecture
 
 Kenari proxies requests to upstream tools by:
 
@@ -269,7 +527,7 @@ includes `Upgrade` and `Connection` headers to support WebSocket proxying.
 
 ---
 
-## 7. Agent Architecture
+## 9. Agent Architecture
 
 ### Push Model (not Pull)
 
@@ -306,7 +564,7 @@ Supported init systems: systemd, OpenRC, runit, SysV init, launchd (macOS), Wind
 
 ---
 
-## 8. Database Schema
+## 10. Database Schema
 
 ```sql
 -- Authenticated users
@@ -372,7 +630,7 @@ CREATE TABLE agent_metrics (
 
 ---
 
-## 9. Deployment Targets
+## 11. Deployment Targets
 
 | Target | Adapter | Database | Build Command |
 |--------|---------|----------|---------------|
@@ -390,7 +648,7 @@ adapter: isEdge ? adapterCloudflare() : adapterNode()
 
 ---
 
-## 10. Security Boundaries
+## 12. Security Boundaries
 
 ```
 TRUST BOUNDARY 1: Internet → nginx
