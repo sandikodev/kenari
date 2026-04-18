@@ -1,7 +1,14 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 	const time = $derived(new Date(data.checkedAt).toLocaleTimeString());
+
+	onMount(() => {
+		const t = setInterval(() => invalidateAll(), 30000);
+		return () => clearInterval(t);
+	});
 </script>
 
 <svelte:head><title>Kenari — Status</title></svelte:head>

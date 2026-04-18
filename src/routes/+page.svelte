@@ -1,8 +1,15 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
 	const user = $derived(data.user as unknown as { name: string; role: string });
+
+	onMount(() => {
+		const t = setInterval(() => invalidateAll(), 10000);
+		return () => clearInterval(t);
+	});
 </script>
 
 <svelte:head><title>Kenari — Dashboard</title></svelte:head>

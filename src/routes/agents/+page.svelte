@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import AppShell from '$lib/components/AppShell.svelte';
 	import type { PageData } from './$types';
 	let { data }: { data: PageData } = $props();
@@ -9,6 +12,11 @@
 	let newName = $state('');
 	let newToken = $state('');
 	let adding = $state(false);
+
+	onMount(() => {
+		const t = setInterval(() => invalidateAll(), 5000);
+		return () => clearInterval(t);
+	});
 
 	async function registerAgent() {
 		adding = true;
