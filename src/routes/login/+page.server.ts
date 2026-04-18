@@ -5,6 +5,7 @@ import { users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { verify } from '@node-rs/argon2';
 import { log, trackFailedLogin, getFailedLoginCount } from '$lib/server/audit';
+import { alertFailedLoginSpike, alertNewLogin } from '$lib/server/telegram';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -31,12 +32,16 @@ export const actions: Actions = {
 
 		if (!user?.passwordHash) {
 			await trackFailedLogin(ip, email);
+			const count = await getFailedLoginCount(ip, 60_000);
+			if (count >= 5) await alertFailedLoginSpike(ip, count);
 			return fail(401, { error: 'Invalid email or password' });
 		}
 
 		const valid = await verify(user.passwordHash, password);
 		if (!valid) {
 			await trackFailedLogin(ip, email);
+			const count = await getFailedLoginCount(ip, 60_000);
+			if (count >= 5) await alertFailedLoginSpike(ip, count);
 			return fail(401, { error: 'Invalid email or password' });
 		}
 
@@ -46,6 +51,7 @@ export const actions: Actions = {
 		cookies.set(cookie.name, cookie.value, { path: '/', ...cookie.attributes });
 
 		await log('login', 'email', user.id, ip, request.headers.get('user-agent') ?? undefined);
+		await alertNewLogin(user.name, ip, 'email');
 		redirect(302, '/');
 	}
 };

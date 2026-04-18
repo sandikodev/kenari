@@ -7,6 +7,7 @@ import { users } from '$lib/server/db/schema';
 import { eq } from 'drizzle-orm';
 import { generateId } from 'lucia';
 import { log } from '$lib/server/audit';
+import { alertNewLogin } from '$lib/server/telegram';
 import type { RequestHandler } from './$types';
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
@@ -95,5 +96,6 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 	cookies.delete('github_oauth_state', { path: '/' });
 
 	await log('login', 'github oauth', user.id);
+	await alertNewLogin(user.name, '', 'github oauth');
 	redirect(302, '/');
 };
