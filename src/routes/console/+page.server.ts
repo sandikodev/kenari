@@ -1,6 +1,6 @@
 import { redirect, fail } from '@sveltejs/kit';
 import { getDb } from '$lib/server/db';
-import { users, auditLog, failedLogins } from '$lib/server/db/schema';
+import { users, auditLog, failedLogins, blockedIps } from '$lib/server/db/schema';
 import { eq, desc, gte } from 'drizzle-orm';
 import { log } from '$lib/server/audit';
 import type { Actions, PageServerLoad } from './$types';
@@ -13,10 +13,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const db = getDb();
 	const since24h = Date.now() - 86_400_000;
 
-	const [allUsers, recentLogs, recentFailures] = await Promise.all([
+	const [allUsers, recentLogs, recentFailures, blocked] = await Promise.all([
 		db.select().from(users).orderBy(users.createdAt),
 		db.select().from(auditLog).orderBy(desc(auditLog.createdAt)).limit(100),
-		db.select().from(failedLogins).where(gte(failedLogins.createdAt, since24h)).orderBy(desc(failedLogins.createdAt))
+		db.select().from(failedLogins).where(gte(failedLogins.createdAt, since24h)).orderBy(desc(failedLogins.createdAt)),
+		db.select().from(blockedIps).orderBy(desc(blockedIps.blockedAt))
 	]);
 
 	// Group failed logins by IP
@@ -30,7 +31,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		users: allUsers,
 		logs: recentLogs,
 		failuresByIp,
-		totalFailures: recentFailures.length
+		totalFailures: recentFailures.length,
+		blockedIps: blocked
 	};
 };
 
@@ -54,6 +56,16 @@ export const actions: Actions = {
 		if (userId === locals.user?.id) return fail(400, { error: 'Cannot delete yourself' });
 		await getDb().delete(users).where(eq(users.id, userId));
 		await log('admin', `deleted user ${userId}`, locals.user?.id);
+		return { success: true };
+	},
+
+	unblockIp: async ({ request, locals }) => {
+		const u = locals.user as unknown as { role: string };
+		if (u?.role !== 'admin') return fail(403, { error: 'Forbidden' });
+		const data = await request.formData();
+		const ip = data.get('ip') as string;
+		await getDb().delete(blockedIps).where(eq(blockedIps.ip, ip));
+		await log('admin', `unblocked IP ${ip}`, locals.user?.id);
 		return { success: true };
 	}
 };

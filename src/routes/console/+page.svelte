@@ -11,7 +11,7 @@
 		access: 'text-sky-400', admin: 'text-amber-400'
 	};
 
-	let activeTab = $state<'users' | 'timeline' | 'threats'>('users');
+	let activeTab = $state<'users' | 'timeline' | 'threats' | 'blocked'>('users');
 	const topThreats = $derived(
 		Object.entries(data.failuresByIp)
 			.sort((a, b) => b[1] - a[1])
@@ -62,12 +62,15 @@
 
 	<!-- Tabs -->
 	<div class="flex gap-1 mb-6 bg-white/3 border border-white/8 rounded-xl p-1 w-fit">
-		{#each [['users','Users'],['timeline','Timeline'],['threats','Threats']] as [tab, label]}
+		{#each [['users','Users'],['timeline','Timeline'],['threats','Threats'],['blocked','Blocked']] as [tab, label]}
 			<button onclick={() => (activeTab = tab as any)}
 				class={`px-4 py-1.5 text-xs font-medium rounded-lg transition ${activeTab === tab ? 'bg-white/10 text-white' : 'text-white/40 hover:text-white'}`}>
 				{label}
 				{#if tab === 'threats' && data.totalFailures > 0}
 					<span class="ml-1.5 bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full text-xs">{data.totalFailures}</span>
+				{/if}
+				{#if tab === 'blocked' && data.blockedIps.length > 0}
+					<span class="ml-1.5 bg-orange-500/20 text-orange-400 px-1.5 py-0.5 rounded-full text-xs">{data.blockedIps.length}</span>
 				{/if}
 			</button>
 		{/each}
@@ -160,6 +163,43 @@
 									<div class="h-full bg-red-500 rounded-full" style="width:{Math.min(count / (topThreats[0]?.[1] ?? 1) * 100, 100)}%"></div>
 								</div>
 								<span class={`text-sm font-bold tabular-nums ${count >= 10 ? 'text-red-400' : count >= 5 ? 'text-amber-400' : 'text-white/60'}`}>{count}</span>
+							</div>
+						</div>
+					{/each}
+				</div>
+			{/if}
+		</div>
+	{/if}
+
+	<!-- Blocked IPs tab -->
+	{#if activeTab === 'blocked'}
+		<div class="space-y-4">
+			{#if data.blockedIps.length === 0}
+				<div class="text-center py-12 text-white/20">
+					<div class="text-3xl mb-2">🛡️</div>
+					<p class="text-sm">No blocked IPs</p>
+				</div>
+			{:else}
+				<div class="bg-white/3 border border-white/8 rounded-xl overflow-hidden">
+					<div class="px-5 py-3 border-b border-white/8 text-xs text-white/30 font-semibold uppercase tracking-wider flex justify-between">
+						<span>IP Address</span><span>Reason / Expires</span>
+					</div>
+					{#each data.blockedIps as block, i}
+						<div class={`flex items-center justify-between px-5 py-3.5 ${i < data.blockedIps.length - 1 ? 'border-b border-white/5' : ''}`}>
+							<div>
+								<span class="font-mono text-sm text-orange-400">{block.ip}</span>
+								<div class="text-xs text-white/30 mt-0.5">{block.reason}</div>
+							</div>
+							<div class="flex items-center gap-3">
+								<span class="text-xs text-white/20">
+									{block.expiresAt ? `expires ${fmt(block.expiresAt)}` : 'permanent'}
+								</span>
+								<form method="POST" action="?/unblockIp" use:enhance>
+									<input type="hidden" name="ip" value={block.ip}>
+									<button class="text-xs text-green-400/60 hover:text-green-400 transition px-2 py-1 rounded hover:bg-green-500/5">
+										Unblock
+									</button>
+								</form>
 							</div>
 						</div>
 					{/each}
