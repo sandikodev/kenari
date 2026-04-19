@@ -54,17 +54,13 @@
 				</button>
 
 				{#if open}
-					<div class="absolute right-0 top-full mt-2 w-48 bg-[#111] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
+					<div class="absolute right-0 top-full mt-2 w-44 bg-[#111] border border-white/10 rounded-xl shadow-2xl overflow-hidden z-50">
 						<div class="px-4 py-3 border-b border-white/8">
 							<div class="text-sm font-semibold">{user.name}</div>
 							<div class="text-xs text-white/30 mt-0.5 capitalize">{user.role}</div>
 						</div>
 						<div class="p-1.5 flex flex-col gap-0.5">
-							<a href="/status" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">Status Page</a>
 							<a href="/settings" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">Settings</a>
-							{#if user.role === 'admin'}
-								<a href="/console" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">Console</a>
-							{/if}
 							<a href="https://github.com/sandikodev/kenari" target="_blank" class="px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/5 rounded-lg transition">GitHub</a>
 						</div>
 						<div class="p-1.5 border-t border-white/8">
@@ -86,13 +82,15 @@
 				{#if user.role === 'admin'}
 					<span class="text-xs bg-amber-500/10 text-amber-400 border border-amber-500/20 px-1.5 py-0.5 rounded-full">admin</span>
 				{/if}
-				<div class="w-7 h-7 rounded-full overflow-hidden bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
-				{#if user.avatarUrl}
-					<img src={user.avatarUrl} alt={user.name} class="w-full h-full object-cover">
-				{:else}
-					{user.name[0].toUpperCase()}
-				{/if}
-			</div>
+				<a href="/settings">
+					<div class="w-7 h-7 rounded-full overflow-hidden bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
+						{#if user.avatarUrl}
+							<img src={user.avatarUrl} alt={user.name} class="w-full h-full object-cover">
+						{:else}
+							{user.name[0].toUpperCase()}
+						{/if}
+					</div>
+				</a>
 			</div>
 		{/if}
 	</header>
@@ -136,17 +134,19 @@
 							<path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
 							<path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
 						</svg>
-						Admin
+						Console
 					</a>
 				{/if}
-				<form method="POST" action="/logout" class="flex-1">
-					<button class="w-full flex flex-col items-center gap-1 py-3 text-xs text-white/30 hover:text-red-400 transition">
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
-							<path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-						</svg>
-						Sign out
-					</button>
-				</form>
+				<a href="/settings" class={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition ${isActive('/settings') ? 'text-white' : 'text-white/30'}`}>
+					<div class="w-5 h-5 rounded-full overflow-hidden bg-amber-500/20 text-amber-400 flex items-center justify-center text-xs font-bold">
+						{#if user.avatarUrl}
+							<img src={user.avatarUrl} alt="" class="w-full h-full object-cover">
+						{:else}
+							{user.name[0].toUpperCase()}
+						{/if}
+					</div>
+					You
+				</a>
 			</div>
 		</nav>
 	{/if}

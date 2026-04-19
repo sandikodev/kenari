@@ -50,6 +50,8 @@ enum Commands {
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
+    // Load .env from current directory (dev convenience — silently ignored if not found)
+    dotenvy::dotenv().ok();
     let cli = Cli::parse();
 
     match cli.command {
