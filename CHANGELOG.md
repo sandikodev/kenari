@@ -10,11 +10,47 @@ Kenari uses [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Planned for v0.2
-- Telegram bot notifications
-- IP geolocation for login anomaly detection
-- Log export UI (CSV/JSON from /console)
-- Hash chaining for tamper-evident audit log
-- Role-based access per proxy route
+- Webhook support (Slack, Discord)
+- Email notifications (SMTP)
+- Anomaly detection (baseline per user)
+- Hash chaining for tamper-evident logs
+- Log shipping to external SIEM
+
+---
+
+## [0.1.1] — 2026-04-19
+
+Patch release — security hardening, E2E tests, CLI improvements.
+
+### Added
+- **IP geolocation** — login alerts include country code via ip-api.com
+- **Brute force auto-block** — IPs blocked after 20 failures in 5 minutes (`blocked_ips` table)
+- **Session management** — view and revoke individual sessions from `/settings`
+- **Log export** — download audit log as JSON or CSV from `/console`
+- **E2E tests** — 44 Playwright tests covering auth, dashboard, console, API, setup
+- **Test API endpoint** — `/api/test` for E2E isolation (dev only, guarded by `dev` flag)
+- **GitHub Actions CI** — svelte-check + E2E on every push/PR
+- **GitHub Actions Release** — auto-build CLI binaries for 6 platforms on tag push
+- **node-cron scheduler** — agent offline detection, failed_logins cleanup
+- **Zod validation** — `/api/agent/push` payload validated at runtime
+- **Shell completions** — `kenari completions bash/zsh/fish`
+- **`kenari doctor --fix`** — auto-escalate sudo only when needed
+- **`kenari agent stop/restart/logs`** — full service lifecycle management
+- **s6, Dinit, Slackware** init system support in CLI
+- **`.dockerignore`** — exclude e2e, docs, cli/target from build context
+- **`docker-compose.override.yml` pattern** — org-specific naming without touching upstream repo
+
+### Fixed
+- `reqwest` switched to `rustls-tls` — enables fully static musl binaries
+- CLI colored output — replaced raw ANSI escape codes with `colored` crate
+- Dockerfile — `--ignore-scripts` prevents Playwright download during `bun install`
+- Grafana image pinned to `11.6.1`
+- Deploy script uses service name, not container name
+
+### Security
+- GitHub OAuth whitelist supports both username and email
+- Blocked IPs checked on every request via hooks.server.ts
+- `/api/test` endpoint only available in dev mode (`dev` flag from SvelteKit)
 
 ---
 
