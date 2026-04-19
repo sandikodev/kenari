@@ -14,14 +14,13 @@ export function initScheduler() {
 	cron.schedule('*/5 * * * *', async () => {
 		try {
 			const db = getDb();
-			const threshold = Date.now() - 5 * 60 * 1000; // 5 minutes
-			const offline = await db
-				.select()
-				.from(agents)
-				.where(lt(agents.lastSeen, threshold));
-
-			for (const agent of offline) {
-				if (agent.lastSeen) await alertAgentOffline(agent.name, agent.lastSeen);
+			const threshold = Date.now() - 5 * 60 * 1000;
+			const allAgents = await db.select().from(agents);
+			for (const agent of allAgents) {
+				// Only alert if agent was previously seen but now offline
+				if (agent.lastSeen && agent.lastSeen < threshold) {
+					await alertAgentOffline(agent.name, agent.lastSeen);
+				}
 			}
 		} catch { /* non-critical */ }
 	});

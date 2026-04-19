@@ -28,21 +28,34 @@
 			<h1 class="text-xl font-bold">Console</h1>
 			<p class="text-white/30 text-sm mt-0.5">System management & security overview</p>
 		</div>
-		<!-- Stats bar -->
-		<div class="hidden sm:flex items-center gap-4 text-xs">
-			<div class="text-center">
-				<div class="text-lg font-bold">{data.users.length}</div>
-				<div class="text-white/30">users</div>
+		<div class="hidden sm:flex items-center gap-3">
+			<!-- Export buttons -->
+			<div class="flex items-center gap-1">
+				<a href="/api/export?format=json" download
+					class="text-xs text-white/40 hover:text-white border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-lg transition">
+					↓ JSON
+				</a>
+				<a href="/api/export?format=csv" download
+					class="text-xs text-white/40 hover:text-white border border-white/10 hover:border-white/20 px-3 py-1.5 rounded-lg transition">
+					↓ CSV
+				</a>
 			</div>
-			<div class="w-px h-8 bg-white/8"></div>
-			<div class="text-center">
-				<div class={`text-lg font-bold ${data.totalFailures > 20 ? 'text-red-400' : 'text-white'}`}>{data.totalFailures}</div>
-				<div class="text-white/30">failed logins 24h</div>
-			</div>
-			<div class="w-px h-8 bg-white/8"></div>
-			<div class="text-center">
-				<div class="text-lg font-bold">{data.logs.length}</div>
-				<div class="text-white/30">events</div>
+			<!-- Stats bar -->
+			<div class="flex items-center gap-4 text-xs">
+				<div class="text-center">
+					<div class="text-lg font-bold">{data.users.length}</div>
+					<div class="text-white/30">users</div>
+				</div>
+				<div class="w-px h-8 bg-white/8"></div>
+				<div class="text-center">
+					<div class={`text-lg font-bold ${data.totalFailures > 20 ? 'text-red-400' : 'text-white'}`}>{data.totalFailures}</div>
+					<div class="text-white/30">failed logins 24h</div>
+				</div>
+				<div class="w-px h-8 bg-white/8"></div>
+				<div class="text-center">
+					<div class="text-lg font-bold">{data.logs.length}</div>
+					<div class="text-white/30">events</div>
+				</div>
 			</div>
 		</div>
 	</div>

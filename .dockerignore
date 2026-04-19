@@ -1,0 +1,17 @@
+.git
+.gitignore
+node_modules
+.svelte-kit
+build
+e2e
+test.db
+local.db
+monitor.db
+*.md
+!package.json
+.env.local
+.env.test
+.env.test.example
+playwright-report
+test-results
+cli/target
