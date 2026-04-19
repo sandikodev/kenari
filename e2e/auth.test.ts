@@ -10,7 +10,7 @@ test.describe('Authentication', () => {
 
 	test('login page renders correctly', async ({ page }) => {
 		await page.goto('/login');
-		await expect(page.getByText('Kenari')).toBeVisible();
+		await expect(page.getByRole('heading', { name: 'Kenari' })).toBeVisible();
 		await expect(page.getByPlaceholder('Email')).toBeVisible();
 		await expect(page.getByPlaceholder('Password')).toBeVisible();
 		await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
@@ -43,8 +43,8 @@ test.describe('Authentication', () => {
 		await page.getByPlaceholder('Email').fill(TEST_ADMIN.email);
 		await page.getByPlaceholder('Password').fill(TEST_ADMIN.password);
 		await page.getByRole('button', { name: 'Sign in' }).click();
-		await expect(page).toHaveURL('/');
-		await expect(page.getByText('Dashboard')).toBeVisible();
+		await page.waitForURL('/');
+		await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
 	});
 
 	test('admin sees admin badge in nav', async ({ page }) => {
@@ -52,23 +52,21 @@ test.describe('Authentication', () => {
 		await page.getByPlaceholder('Email').fill(TEST_ADMIN.email);
 		await page.getByPlaceholder('Password').fill(TEST_ADMIN.password);
 		await page.getByRole('button', { name: 'Sign in' }).click();
-		await expect(page.getByText('admin')).toBeVisible();
+		await page.waitForURL('/');
+		await expect(page.locator('span.text-amber-400').first()).toBeVisible();
 	});
 
 	test('logout clears session and redirects to /login', async ({ page }) => {
-		// Login first
 		await page.goto('/login');
 		await page.getByPlaceholder('Email').fill(TEST_ADMIN.email);
 		await page.getByPlaceholder('Password').fill(TEST_ADMIN.password);
 		await page.getByRole('button', { name: 'Sign in' }).click();
-		await expect(page).toHaveURL('/');
-
-		// Open profile dropdown and sign out
-		await page.getByText(TEST_ADMIN.name[0]).first().click();
+		await page.waitForURL('/');
+		// Click profile button in nav then sign out
+		await page.locator('nav').getByRole('button').last().click();
+		await page.waitForTimeout(300);
 		await page.getByRole('button', { name: 'Sign out' }).click();
 		await expect(page).toHaveURL('/login');
-
-		// Verify session is gone
 		await page.goto('/');
 		await expect(page).toHaveURL('/login');
 	});

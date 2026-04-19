@@ -13,12 +13,16 @@ export default defineConfig({
 		trace: 'on-first-retry',
 	},
 
-	// Run dev server before tests
 	webServer: {
-		command: 'bun --env-file=.env.test run dev',
-		url: 'http://localhost:5173',
-		reuseExistingServer: true,
+		command: 'bun --env-file=.env.test run dev -- --port 5174',
+		url: 'http://localhost:5174',
+		reuseExistingServer: false,
 		timeout: 30_000,
+	},
+
+	use: {
+		baseURL: 'http://localhost:5174',
+		trace: 'on-first-retry',
 	},
 
 	projects: [
