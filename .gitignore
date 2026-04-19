@@ -23,6 +23,9 @@ Thumbs.db
 !.env.edge.example
 !.env.test.example
 
+# Local databases
+data/
+
 # Deployment-specific overrides (not for upstream repo)
 docker-compose.override.yml
 
