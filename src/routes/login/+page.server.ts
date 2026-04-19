@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { verify } from '@node-rs/argon2';
 import { log, trackFailedLogin, getFailedLoginCount } from '$lib/server/audit';
 import { alertFailedLoginSpike, alertNewLogin } from '$lib/server/telegram';
+import { getCountry } from '$lib/server/geo';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
@@ -51,7 +52,8 @@ export const actions: Actions = {
 		cookies.set(cookie.name, cookie.value, { path: '/', ...cookie.attributes });
 
 		await log('login', 'email', user.id, ip, request.headers.get('user-agent') ?? undefined);
-		await alertNewLogin(user.name, ip, 'email');
+		const country = await getCountry(ip);
+		await alertNewLogin(user.name, ip, `email${country ? ` (${country})` : ''}`);
 		redirect(302, '/');
 	}
 };

@@ -34,6 +34,13 @@ export const failedLogins = sqliteTable('failed_logins', {
 	createdAt: integer('created_at').notNull()
 });
 
+export const blockedIps = sqliteTable('blocked_ips', {
+	ip: text('ip').primaryKey(),
+	reason: text('reason').notNull(),
+	blockedAt: integer('blocked_at').notNull(),
+	expiresAt: integer('expires_at') // null = permanent
+});
+
 export const agents = sqliteTable('agents', {
 	id: text('id').primaryKey(),
 	name: text('name').notNull(),

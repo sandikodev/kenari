@@ -2,12 +2,19 @@ import type { Handle } from '@sveltejs/kit';
 import { getLucia } from '$lib/server/auth';
 import { getDb } from '$lib/server/db';
 import { users } from '$lib/server/db/schema';
-import { redirect } from '@sveltejs/kit';
+import { redirect, error } from '@sveltejs/kit';
 import { initScheduler } from '$lib/server/scheduler';
+import { isBlocked } from '$lib/server/audit';
 
 export const handle: Handle = async ({ event, resolve }) => {
 	// Init background scheduler (idempotent)
 	try { initScheduler(); } catch { /* non-critical */ }
+
+	// Block banned IPs on all routes except static assets
+	if (!event.url.pathname.startsWith('/_app')) {
+		const ip = event.getClientAddress();
+		if (await isBlocked(ip)) error(403, 'Access denied');
+	}
 	// First-run redirect
 	if (!event.url.pathname.startsWith('/setup') && !event.url.pathname.startsWith('/auth')) {
 		try {

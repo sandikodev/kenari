@@ -9,6 +9,8 @@
 	let loadingPw = $state(false);
 	let loadingDel = $state(false);
 	let deleteConfirm = $state('');
+
+	const fmt = (ts: number) => new Date(ts).toLocaleString('id-ID', { dateStyle: 'short', timeStyle: 'short' });
 </script>
 
 <svelte:head><title>Kenari — Settings</title></svelte:head>
@@ -32,6 +34,30 @@
 			<div class="text-xs text-white/30 capitalize mt-0.5">{user.role}</div>
 		</div>
 	</div>
+
+	<!-- Sessions -->
+	<section class="bg-white/3 border border-white/8 rounded-xl p-5 mb-4">
+		<h2 class="text-sm font-semibold mb-4">Active Sessions</h2>
+		<div class="space-y-2">
+			{#each data.sessions as s}
+				<div class="flex items-center justify-between text-xs">
+					<div>
+						<span class="font-mono text-white/50">{s.id.slice(0, 16)}...</span>
+						{#if s.isCurrent}<span class="ml-2 text-green-400">current</span>{/if}
+						<div class="text-white/30 mt-0.5">expires {fmt(s.expiresAt)}</div>
+					</div>
+					{#if !s.isCurrent}
+						<form method="POST" action="?/revokeSession" use:enhance>
+							<input type="hidden" name="sessionId" value={s.id}>
+							<button class="text-red-400/60 hover:text-red-400 transition px-2 py-1 rounded hover:bg-red-500/5">
+								Revoke
+							</button>
+						</form>
+					{/if}
+				</div>
+			{/each}
+		</div>
+	</section>
 
 	<!-- Change password -->
 	<section class="bg-white/3 border border-white/8 rounded-xl p-5 mb-4">
