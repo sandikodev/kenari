@@ -1,11 +1,12 @@
 import { json, error } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 import { getDb } from '$lib/server/db';
 import { users, sessions, auditLog, failedLogins, agents, agentMetrics } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
 
-// Only available in test/dev mode
+// Only available in dev mode — SvelteKit tree-shakes this in production build
 export const POST: RequestHandler = async ({ request }) => {
-	if (process.env.NODE_ENV === 'production') error(404, 'Not found');
+	if (!dev) error(404, 'Not found');
 
 	const { action, data } = await request.json();
 	const db = getDb();

@@ -23,7 +23,7 @@ services:
     networks: [internal-net]
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.6.1
     container_name: kenari-grafana
     restart: unless-stopped
     environment:
