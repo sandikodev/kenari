@@ -46,6 +46,7 @@ volumes:
 
 networks:
   proxy-net:
-    external: true   # your reverse proxy network (nginx-proxy, traefik, etc.)
+    external: true
+    name: nginx-net   # match existing nginx-proxy network
   internal-net:
     driver: bridge
