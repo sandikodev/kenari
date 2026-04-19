@@ -13,10 +13,28 @@
 	let newToken = $state('');
 	let adding = $state(false);
 
+	let lastRefresh = $state(Date.now());
+	let refreshing = $state(false);
+
 	onMount(() => {
-		const t = setInterval(() => invalidateAll(), 5000);
+		const t = setInterval(async () => {
+			refreshing = true;
+			await invalidateAll();
+			lastRefresh = Date.now();
+			refreshing = false;
+		}, 5000);
 		return () => clearInterval(t);
 	});
+
+	const ago = (ts: number | null) => {
+		if (!ts) return 'never';
+		const s = Math.floor((Date.now() - ts) / 1000);
+		if (s < 60) return `${s}s ago`;
+		if (s < 3600) return `${Math.floor(s / 60)}m ago`;
+		return `${Math.floor(s / 3600)}h ago`;
+	};
+
+	const online = (ts: number | null) => ts && Date.now() - ts < 90_000;
 
 	async function registerAgent() {
 		adding = true;
@@ -29,16 +47,6 @@
 		newToken = data.token;
 		adding = false;
 	}
-
-	const ago = (ts: number | null) => {
-		if (!ts) return 'never';
-		const s = Math.floor((Date.now() - ts) / 1000);
-		if (s < 60) return `${s}s ago`;
-		if (s < 3600) return `${Math.floor(s/60)}m ago`;
-		return `${Math.floor(s/3600)}h ago`;
-	};
-
-	const online = (ts: number | null) => ts && Date.now() - ts < 90_000;
 </script>
 
 <svelte:head><title>Kenari — Agents</title></svelte:head>
@@ -50,12 +58,21 @@
 			<h1 class="text-xl font-bold">Agents</h1>
 			<p class="text-white/30 text-sm mt-1">Hosts running kenari-cli</p>
 		</div>
-		{#if isAdmin}
-			<button onclick={() => (newName = newName ? '' : ' ')}
-				class="text-sm bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-lg transition">
-				+ Add agent
-			</button>
-		{/if}
+		<div class="flex items-center gap-3">
+			<span class="text-xs text-white/20 tabular-nums">
+				{#if refreshing}
+					<span class="text-sky-400">↻ refreshing...</span>
+				{:else}
+					updated {ago(lastRefresh)}
+				{/if}
+			</span>
+			{#if isAdmin}
+				<button onclick={() => (newName = newName ? '' : ' ')}
+					class="text-sm bg-white/5 hover:bg-white/10 border border-white/10 px-4 py-2 rounded-lg transition">
+					+ Add agent
+				</button>
+			{/if}
+		</div>
 	</div>
 
 	{#if isAdmin && newName !== ''}
@@ -109,21 +126,21 @@
 								<div class="text-xs text-white/30 mb-1">CPU</div>
 								<div class="text-lg font-bold">{m.cpuPercent.toFixed(1)}<span class="text-xs text-white/30">%</span></div>
 								<div class="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
-									<div class="h-full bg-sky-500 rounded-full" style="width:{Math.min(m.cpuPercent,100)}%"></div>
+									<div class="h-full bg-sky-500 rounded-full transition-all duration-700" style="width:{Math.min(m.cpuPercent,100)}%"></div>
 								</div>
 							</div>
 							<div class="bg-black/30 rounded-lg p-3">
 								<div class="text-xs text-white/30 mb-1">Memory</div>
 								<div class="text-lg font-bold">{(m.memoryUsedMb/1024).toFixed(1)}<span class="text-xs text-white/30"> GB</span></div>
 								<div class="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
-									<div class="h-full bg-violet-500 rounded-full" style="width:{Math.min(m.memoryUsedMb/m.memoryTotalMb*100,100)}%"></div>
+									<div class="h-full bg-violet-500 rounded-full transition-all duration-700" style="width:{Math.min(m.memoryUsedMb/m.memoryTotalMb*100,100)}%"></div>
 								</div>
 							</div>
 							<div class="bg-black/30 rounded-lg p-3">
 								<div class="text-xs text-white/30 mb-1">Disk</div>
 								<div class="text-lg font-bold">{m.diskUsedGb.toFixed(0)}<span class="text-xs text-white/30"> GB</span></div>
 								<div class="mt-2 h-1 bg-white/10 rounded-full overflow-hidden">
-									<div class="h-full bg-amber-500 rounded-full" style="width:{Math.min(m.diskUsedGb/m.diskTotalGb*100,100)}%"></div>
+									<div class="h-full bg-amber-500 rounded-full transition-all duration-700" style="width:{Math.min(m.diskUsedGb/m.diskTotalGb*100,100)}%"></div>
 								</div>
 							</div>
 							<div class="bg-black/30 rounded-lg p-3">
