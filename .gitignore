@@ -16,10 +16,15 @@ Thumbs.db
 .env.local
 .env.production
 .env.edge
+.env.test
 .env.*.local
 !.env
 !.env.example
 !.env.edge.example
+!.env.test.example
+
+# Deployment-specific overrides (not for upstream repo)
+docker-compose.override.yml
 
 # Vite
 vite.config.js.timestamp-*

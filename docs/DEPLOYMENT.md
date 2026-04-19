@@ -338,7 +338,34 @@ All 4xx and 5xx errors are logged to stdout automatically.
 
 ---
 
-## 12. Troubleshooting
+## 11. Customizing Container Names (Override Pattern)
+
+The default `docker-compose.yml` uses generic names (`kenari-gateway`, `kenari-kuma`, etc.)
+so the repo stays clean for any organization to use.
+
+If your organization uses a naming convention (e.g., `smauii-monitor-*`, `myorg-monitor-*`),
+create a `docker-compose.override.yml` in the same directory — Docker Compose merges it
+automatically. This file should **not** be committed to the upstream repo.
+
+```yaml
+# docker-compose.override.yml — gitignored, org-specific
+name: myorg-monitor
+
+services:
+  gateway:
+    container_name: myorg-monitor-gateway
+    image: myorg-monitor:latest
+  kuma:
+    container_name: myorg-monitor-kuma
+  grafana:
+    container_name: myorg-monitor-grafana
+```
+
+Then deploy normally:
+```bash
+docker compose --env-file .env.production up -d
+# Docker Compose automatically merges docker-compose.override.yml
+```
 
 | Symptom | Likely Cause | Fix |
 |---------|-------------|-----|
