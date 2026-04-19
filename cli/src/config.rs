@@ -10,6 +10,10 @@ pub struct Config {
 }
 
 fn config_path() -> std::path::PathBuf {
+    // Allow override via env var for dev/test environments
+    if let Ok(path) = std::env::var("KENARI_CONFIG") {
+        return std::path::PathBuf::from(path);
+    }
     dirs::config_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("/etc"))
         .join("kenari")
