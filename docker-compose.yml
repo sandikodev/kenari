@@ -37,12 +37,38 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
     volumes:
       - grafana-data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning
+    networks: [internal-net]
+
+  prometheus:
+    image: prom/prometheus:v3.3.1
+    container_name: kenari-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+    networks: [internal-net]
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: kenari-blackbox
+    restart: unless-stopped
+    networks: [internal-net]
+
+  loki:
+    image: grafana/loki:3.4.3
+    container_name: kenari-loki
+    restart: unless-stopped
     networks: [internal-net]
 
 volumes:
   gateway-data:
   kuma-data:
   grafana-data:
+  prometheus-data:
 
 networks:
   proxy-net:
