@@ -53,8 +53,7 @@ function getEnvRoutes(): MonitorRoute[] {
 	}
 }
 
-// Routes from DB (dynamic — managed via /console UI)
-// Called separately when DB is available
+// Routes from DB (dynamic — managed via /registry UI)
 export async function getDbRoutes(): Promise<MonitorRoute[]> {
 	try {
 		const { getDb } = await import('$lib/server/db');
@@ -67,7 +66,8 @@ export async function getDbRoutes(): Promise<MonitorRoute[]> {
 			name: s.name,
 			icon: s.icon,
 			description: s.description ?? '',
-			proxyPath: s.proxyPath,
+			// DB services are proxied via /proxy/<id>
+			proxyPath: `/proxy/${s.id}`,
 			upstreamUrl: s.upstreamUrl,
 			authHeader: s.authHeaderKey && s.authHeaderValue
 				? { [s.authHeaderKey]: s.authHeaderValue }

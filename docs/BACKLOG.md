@@ -19,15 +19,15 @@ Agreed structure:
 
 ### Tasks
 
-- [ ] **Create `/registry` page** with two tabs:
-  - **Agents tab** — move current `/agents` content here (metrics, register, online status)
-  - **Services tab** — new: CRUD for `services` table (add/edit/delete proxy routes)
-- [ ] **Update nav** — replace "Agents" link with "Registry" in AppShell (desktop + mobile)
-- [ ] **Redirect `/agents`** → `/registry` for backward compatibility
-- [ ] **Services CRUD UI** — form to add/edit/delete services in Registry > Services tab:
-  - Fields: name, icon, description, proxy path, upstream URL, auth header (key/value), allowed roles
-  - Admin only
-- [ ] **Migrate DB** — add `services` table to production DB (`bun run db:push:prod`)
+- [x] **Create `/registry` page** with two tabs (Agents + Services)
+- [x] **Update nav** — "Agents" → "Registry" in AppShell
+- [x] **Redirect `/agents`** → `/registry` (301)
+- [x] **Services CRUD UI** — add/enable/disable/delete in Registry > Services tab
+- [x] **`services` table schema** added to DB
+- [x] **Migrate DB** — add `services` table to production DB
+- [x] **Update `db-migrate-prod.sh`** — add `services` table
+- [x] **Dynamic proxy routing** — `/proxy/<id>` handler for DB services
+- [ ] **Dashboard widgets** — summary: agent count, service health, recent alerts
 - [ ] **Dashboard widgets** — make dashboard customizable:
   - Show/hide shortcuts per user preference
   - Add summary widgets: agent count, service health, recent alerts

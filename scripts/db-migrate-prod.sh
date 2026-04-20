@@ -33,6 +33,7 @@ const migrations = [
   'CREATE TABLE IF NOT EXISTS failed_logins (id INTEGER PRIMARY KEY AUTOINCREMENT, ip TEXT NOT NULL, email TEXT, created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS agents (id TEXT PRIMARY KEY, name TEXT NOT NULL, token TEXT NOT NULL UNIQUE, last_seen INTEGER, created_at INTEGER NOT NULL)',
   'CREATE TABLE IF NOT EXISTS agent_metrics (id INTEGER PRIMARY KEY AUTOINCREMENT, agent_id TEXT NOT NULL REFERENCES agents(id), cpu_percent REAL NOT NULL, memory_used_mb REAL NOT NULL, memory_total_mb REAL NOT NULL, disk_used_gb REAL NOT NULL, disk_total_gb REAL NOT NULL, uptime_secs INTEGER NOT NULL, created_at INTEGER NOT NULL)',
+  'CREATE TABLE IF NOT EXISTS services (id TEXT PRIMARY KEY, name TEXT NOT NULL, icon TEXT NOT NULL DEFAULT \'🔗\', description TEXT, proxy_path TEXT NOT NULL UNIQUE, upstream_url TEXT NOT NULL, auth_header_key TEXT, auth_header_value TEXT, allowed_roles TEXT, enabled INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL)',
 ];
 const alters = [
   'ALTER TABLE users ADD COLUMN avatar_url TEXT',

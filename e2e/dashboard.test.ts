@@ -58,11 +58,13 @@ test.describe('Agents', () => {
 
 	test('admin can register new agent', async ({ page }) => {
 		await login(page);
-		await page.goto('/agents');
-		await page.getByRole('button', { name: '+ Add agent' }).click();
-		await page.getByPlaceholder(/Host name/).fill('new-test-agent');
-		await page.getByRole('button', { name: 'Register' }).click();
-		// Token should appear
+		await page.goto('/registry');
+		await page.getByRole('button', { name: '+ Register agent' }).click();
+		await page.waitForTimeout(300);
+		const input = page.getByPlaceholder('Host name (e.g. prod-server-1)');
+		await expect(input).toBeVisible();
+		await input.fill('new-test-agent');
+		await page.getByRole('button', { name: 'Register' }).last().click();
 		await expect(page.getByText(/Copy this token/)).toBeVisible();
 	});
 
