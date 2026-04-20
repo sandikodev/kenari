@@ -1,0 +1,78 @@
+name: kenari
+
+services:
+  gateway:
+    image: kenari:latest
+    container_name: kenari-gateway
+    restart: unless-stopped
+    env_file: .env.production
+    volumes:
+      - gateway-data:/app/data
+    depends_on: [kuma, grafana]
+    networks: [proxy-net, internal-net]
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  kuma:
+    image: louislam/uptime-kuma:1
+    container_name: kenari-kuma
+    restart: unless-stopped
+    volumes:
+      - kuma-data:/app/data
+    networks: [internal-net]
+
+  grafana:
+    image: grafana/grafana:11.6.1
+    container_name: kenari-grafana
+    restart: unless-stopped
+    environment:
+      GF_SERVER_ROOT_URL: ${ORIGIN}/grafana
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+      GF_AUTH_PROXY_ENABLED: "true"
+      GF_AUTH_PROXY_HEADER_NAME: X-WEBAUTH-USER
+      GF_AUTH_PROXY_HEADER_PROPERTY: username
+      GF_AUTH_PROXY_AUTO_SIGN_UP: "true"
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./grafana-provisioning:/etc/grafana/provisioning
+    networks: [internal-net]
+
+  prometheus:
+    image: prom/prometheus:v3.3.1
+    container_name: kenari-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.retention.time=30d'
+    networks: [internal-net]
+
+  blackbox:
+    image: prom/blackbox-exporter:v0.25.0
+    container_name: kenari-blackbox
+    restart: unless-stopped
+    networks: [internal-net]
+
+  loki:
+    image: grafana/loki:3.4.3
+    container_name: kenari-loki
+    restart: unless-stopped
+    networks: [internal-net]
+
+volumes:
+  gateway-data:
+  kuma-data:
+  grafana-data:
+  prometheus-data:
+
+networks:
+  proxy-net:
+    external: true
+    name: nginx-net   # match existing nginx-proxy network
+  internal-net:
+    driver: bridge
