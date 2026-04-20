@@ -1,7 +1,20 @@
 import { getDb } from './db';
 import { auditLog, failedLogins, blockedIps } from './db/schema';
-import { gte, eq } from 'drizzle-orm';
+import { gte, eq, desc } from 'drizzle-orm';
 import { alertFailedLoginSpike } from './telegram';
+import { createHash } from 'node:crypto';
+
+function computeHash(entry: {
+	id?: number; userId: string | null; action: string;
+	detail: string | null; ip: string | null; createdAt: number;
+}, prevHash: string | null): string {
+	const content = JSON.stringify({
+		id: entry.id, userId: entry.userId, action: entry.action,
+		detail: entry.detail, ip: entry.ip, createdAt: entry.createdAt,
+		prevHash
+	});
+	return createHash('sha256').update(content).digest('hex');
+}
 
 export async function log(
 	action: string,
@@ -11,14 +24,19 @@ export async function log(
 	userAgent?: string
 ) {
 	try {
-		await getDb().insert(auditLog).values({
-			userId: userId ?? null,
-			action,
-			detail: detail ?? null,
-			ip: ip ?? null,
-			userAgent: userAgent ?? null,
-			createdAt: Date.now()
-		});
+		const db = getDb();
+		// Get previous hash for chaining
+		const prev = await db.select({ hash: auditLog.hash })
+			.from(auditLog).orderBy(desc(auditLog.id)).limit(1);
+		const prevHash = prev[0]?.hash ?? null;
+
+		const entry = {
+			userId: userId ?? null, action,
+			detail: detail ?? null, ip: ip ?? null,
+			userAgent: userAgent ?? null, createdAt: Date.now()
+		};
+		const hash = computeHash(entry, prevHash);
+		await db.insert(auditLog).values({ ...entry, hash });
 	} catch { /* non-critical */ }
 }
 

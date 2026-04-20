@@ -24,7 +24,8 @@ export const auditLog = sqliteTable('audit_log', {
 	detail: text('detail'),
 	ip: text('ip'),
 	userAgent: text('user_agent'),
-	createdAt: integer('created_at').notNull()
+	createdAt: integer('created_at').notNull(),
+	hash: text('hash') // SHA-256 of (content + prev_hash) for tamper detection
 });
 
 export const failedLogins = sqliteTable('failed_logins', {
