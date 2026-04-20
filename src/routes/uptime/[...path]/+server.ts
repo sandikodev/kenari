@@ -43,6 +43,7 @@ function createProxyHandler(routeId: string): RequestHandler {
 				headers,
 				body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body,
 				signal: AbortSignal.timeout(30000),
+				redirect: 'manual',
 				// @ts-expect-error
 				duplex: 'half'
 			});

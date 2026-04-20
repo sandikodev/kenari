@@ -3,6 +3,40 @@ import { getRoutes } from '$lib/monitor.config';
 import { log } from '$lib/server/audit';
 import type { RequestHandler } from '@sveltejs/kit';
 
+async function proxyFetch(
+	url: string,
+	options: RequestInit & { headers: Headers },
+	maxRedirects = 5
+): Promise<Response> {
+	let currentUrl = url;
+	const visited = new Set<string>();
+
+	for (let i = 0; i < maxRedirects; i++) {
+		if (visited.has(currentUrl)) {
+			// Loop detected — return last response as-is
+			return fetch(currentUrl, { ...options, redirect: 'manual' });
+		}
+		visited.add(currentUrl);
+
+		const res = await fetch(currentUrl, { ...options, redirect: 'manual' });
+		if (res.status < 300 || res.status >= 400) return res;
+
+		const location = res.headers.get('location');
+		if (!location) return res;
+
+		// Resolve relative redirects
+		if (location.startsWith('/')) {
+			const base = new URL(currentUrl);
+			currentUrl = base.origin + location;
+		} else if (location.startsWith('http')) {
+			currentUrl = location;
+		} else {
+			return res;
+		}
+	}
+	throw new Error('Too many redirects');
+}
+
 function createProxyHandler(routeId: string): RequestHandler {
 	return async ({ params, request, locals, getClientAddress }) => {
 		if (!locals.user) redirect(302, '/login');
@@ -34,7 +68,7 @@ function createProxyHandler(routeId: string): RequestHandler {
 		headers.set('accept-encoding', 'identity');
 
 		try {
-			const response = await fetch(upstreamUrl, {
+			const response = await proxyFetch(upstreamUrl, {
 				method: request.method,
 				headers,
 				body: ['GET', 'HEAD'].includes(request.method) ? undefined : request.body,
@@ -42,6 +76,7 @@ function createProxyHandler(routeId: string): RequestHandler {
 				// @ts-expect-error
 				duplex: 'half'
 			});
+
 			const resHeaders = new Headers(response.headers);
 			resHeaders.delete('content-encoding');
 			return new Response(response.body, { status: response.status, headers: resHeaders });
