@@ -49,9 +49,10 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		let orgAllowed = false;
 
 		if (!loginAllowed && allowedOrgs.length > 0) {
-			const orgs: { login: string }[] = await fetch('https://api.github.com/user/orgs', {
+			const orgsRaw = await fetch('https://api.github.com/user/orgs', {
 				headers: { Authorization: `Bearer ${accessToken}`, 'User-Agent': 'kenari' }
 			}).then((r) => r.json());
+			const orgs: { login: string }[] = Array.isArray(orgsRaw) ? orgsRaw : [];
 			orgAllowed = orgs.some((o) => allowedOrgs.includes(o.login));
 		}
 

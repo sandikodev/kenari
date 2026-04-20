@@ -25,6 +25,8 @@ function createProxyHandler(routeId: string): RequestHandler {
 			}
 		}
 		headers.delete('host');
+		headers.delete('accept-encoding');
+		headers.set('accept-encoding', 'identity');
 
 		try {
 			const response = await fetch(upstreamUrl, {
@@ -35,7 +37,9 @@ function createProxyHandler(routeId: string): RequestHandler {
 				// @ts-expect-error
 				duplex: 'half'
 			});
-			return new Response(response.body, { status: response.status, headers: response.headers });
+			const resHeaders = new Headers(response.headers);
+			resHeaders.delete('content-encoding');
+			return new Response(response.body, { status: response.status, headers: resHeaders });
 		} catch {
 			error(502, `Cannot reach ${route.name}`);
 		}

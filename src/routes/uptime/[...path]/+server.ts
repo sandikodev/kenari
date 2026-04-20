@@ -10,7 +10,6 @@ function createProxyHandler(routeId: string): RequestHandler {
 		const route = getRoutes().find((r) => r.id === routeId);
 		if (!route) error(404, 'Route not configured');
 
-		// Log first GET only (avoid spamming on every asset request)
 		if (request.method === 'GET' && !params.path) {
 			await log('access', route.id, locals.user.id, getClientAddress());
 		}
@@ -26,6 +25,11 @@ function createProxyHandler(routeId: string): RequestHandler {
 			}
 		}
 		headers.delete('host');
+		// Prevent upstream from sending compressed responses
+		// fetch() decompresses automatically but streams the decoded body
+		// while keeping the original content-encoding header → browser double-decodes
+		headers.delete('accept-encoding');
+		headers.set('accept-encoding', 'identity');
 
 		try {
 			const response = await fetch(upstreamUrl, {
@@ -36,7 +40,22 @@ function createProxyHandler(routeId: string): RequestHandler {
 				// @ts-expect-error
 				duplex: 'half'
 			});
-			return new Response(response.body, { status: response.status, headers: response.headers });
+
+			// For HTML responses, rewrite absolute asset paths to include proxy prefix
+			const contentType = response.headers.get('content-type') ?? '';
+			if (contentType.includes('text/html') && request.method === 'GET') {
+				let html = await response.text();
+				html = html.replace(/(src|href)="\/(?!\/)/g, `$1="${route.proxyPath}/`);
+				const resHeaders = new Headers(response.headers);
+				resHeaders.delete('content-length');
+				resHeaders.delete('content-encoding');
+				return new Response(html, { status: response.status, headers: resHeaders });
+			}
+
+			// For all other responses, strip content-encoding (fetch already decoded)
+			const resHeaders = new Headers(response.headers);
+			resHeaders.delete('content-encoding');
+			return new Response(response.body, { status: response.status, headers: resHeaders });
 		} catch {
 			error(502, `Cannot reach ${route.name}`);
 		}
