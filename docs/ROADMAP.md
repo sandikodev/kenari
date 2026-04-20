@@ -89,6 +89,34 @@ Focus: make Kenari production-ready for teams that take security seriously.
 
 Focus: turn kenari-cli into a real Host-based Intrusion Detection System.
 
+### Loki Integration (Log Aggregation)
+
+Loki is a log aggregation system from Grafana Labs — like Prometheus but for logs.
+In the Kenari ecosystem, the planned flow is:
+
+```
+kenari-cli (on each host) → Loki (storage) → Grafana (visualization)
+```
+
+This enables:
+- Centralized log collection from all monitored hosts
+- nginx access log analysis (detect attack patterns, 4xx spikes)
+- Application log correlation with metrics
+- Full SIEM capability when combined with kenari-cli HIDS events
+
+**Why not now:** Loki is already running (`smauii-monitor-loki`) and provisioned as
+a Grafana datasource, but `grafana-lokiexplore-app` plugin is disabled until
+kenari-cli implements log shipping. The plugin will be re-enabled in v0.3 when
+Promtail or a custom log shipper is added to kenari-cli.
+
+**Planned architecture:**
+```
+kenari-cli agent start
+  ├── metrics push → /api/agent/push (already working)
+  └── log push → Loki HTTP API (v0.3)
+      └── Grafana Loki Explore → visualize logs
+```
+
 ### File Integrity Monitoring
 - [ ] **Baseline creation** — `kenari hids baseline` scans specified paths and records hashes
 - [ ] **Change detection** — detect modifications to critical files:

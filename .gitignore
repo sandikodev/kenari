@@ -29,6 +29,9 @@ data/
 # Deployment-specific overrides (not for upstream repo)
 docker-compose.override.yml
 
+# Local prometheus config with real targets
+prometheus/prometheus.local.yml
+
 # Vite
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
