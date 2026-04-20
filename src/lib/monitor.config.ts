@@ -21,8 +21,7 @@ export function getRoutes(): MonitorRoute[] {
 			name: 'Uptime Kuma',
 			icon: '🟢',
 			description: 'Service uptime & incident monitoring',
-			proxyPath: '/uptime',
-			// Edge:        https://uptime.yourdomain.com
+			proxyPath: '/dashboard',
 			upstreamUrl: env.KUMA_URL ?? 'http://localhost:3001',
 			authHeader: env.KUMA_API_TOKEN
 				? { 'X-Kuma-Token': env.KUMA_API_TOKEN }
