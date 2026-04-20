@@ -10,6 +10,12 @@ function createProxyHandler(routeId: string): RequestHandler {
 		const route = getRoutes().find((r) => r.id === routeId);
 		if (!route) error(404, 'Route not configured');
 
+		// Role-based access check
+		const userRole = (locals.user as unknown as { role: string }).role;
+		if (route.allowedRoles && !route.allowedRoles.includes(userRole)) {
+			error(403, 'Access denied — insufficient role');
+		}
+
 		if (request.method === 'GET' && !params.path) {
 			await log('access', route.id, locals.user.id, getClientAddress());
 		}

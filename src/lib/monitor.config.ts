@@ -1,7 +1,3 @@
-// Monitor route configuration
-// Upstream URLs are read from environment variables so the same config
-// works for both self-hosted (internal Docker network) and edge deployment (public URLs).
-
 import { env } from '$env/dynamic/private';
 
 export interface MonitorRoute {
@@ -12,6 +8,7 @@ export interface MonitorRoute {
 	proxyPath: string;
 	upstreamUrl: string;
 	authHeader?: Record<string, string>;
+	allowedRoles?: string[]; // undefined = all authenticated users
 }
 
 export function getRoutes(): MonitorRoute[] {
@@ -33,9 +30,7 @@ export function getRoutes(): MonitorRoute[] {
 			icon: '📊',
 			description: 'Metrics, logs & analytics dashboards',
 			proxyPath: '/grafana',
-			// Edge:        https://grafana.yourdomain.com
 			upstreamUrl: env.GRAFANA_URL ?? 'http://localhost:3000',
-			// Grafana auth proxy — user already authenticated via gateway
 			authHeader: { 'X-WEBAUTH-USER': 'admin' }
 		}
 	];

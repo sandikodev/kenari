@@ -36,6 +36,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) redirect(302, '/login');
 
 	const routes = getRoutes();
+	const userRole = (locals.user as unknown as { role: string }).role;
+	const accessibleRoutes = routes.filter(
+		(r) => !r.allowedRoles || r.allowedRoles.includes(userRole)
+	);
 
 	// Return cached result immediately — refresh in background if stale (>15s)
 	const stale = routes.some(r => {
@@ -43,15 +47,12 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return !c || Date.now() - c.checkedAt > 15_000;
 	});
 
-	if (stale) {
-		// Don't await — return immediately with whatever cache we have
-		refreshHealth();
-	}
+	if (stale) refreshHealth();
 
 	const health: Record<string, { online: boolean; latency: number }> = {};
 	for (const route of routes) {
 		health[route.id] = healthCache[route.id] ?? { online: false, latency: 0 };
 	}
 
-	return { user: locals.user, routes, health };
+	return { user: locals.user, routes: accessibleRoutes, health };
 };
