@@ -9,12 +9,60 @@ Kenari uses [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-### Planned for v0.2
-- Webhook support (Slack, Discord)
-- Email notifications (SMTP)
+### Planned for v0.3
+- Kenari CLI HIDS mode (file integrity, process monitoring)
 - Anomaly detection (baseline per user)
-- Hash chaining for tamper-evident logs
 - Log shipping to external SIEM
+
+---
+
+## [0.2.0] — 2026-04-20
+
+Security hardening, full Uptime Kuma subpath support, and ecosystem contributions.
+
+### Gateway
+
+**Security**
+- IP geolocation on login alerts (country code via ip-api.com, in-memory cache)
+- Brute force auto-block: 20 failures in 5 minutes → `blocked_ips` table, 1 hour ban
+- Blocked IPs tab in `/console` with unblock action
+- Hash chaining for audit log — SHA-256 chain for tamper-evident logs
+- `/api/audit/verify` endpoint to verify chain integrity
+
+**Notifications**
+- Telegram alerts: brute force, service down/up, new login, agent offline
+- Webhook support (`WEBHOOK_URL`) — Slack, Discord, or any HTTP endpoint
+
+**Access Control**
+- Role-based access per proxy route (`allowedRoles` in `monitor.config.ts`)
+- Session management in `/settings` — view and revoke individual sessions
+
+**Dashboard**
+- Non-blocking health checks — dashboard loads instantly
+- Log export (JSON/CSV) from `/console`
+- Blocked IPs tab with unblock action
+
+### Uptime Kuma Integration
+
+First working implementation of `UPTIME_KUMA_BASE_PATH` — Kuma fully functional at `/uptime/`
+- Fork: https://github.com/sandikodev/uptime-kuma
+- 7 files patched: Vite base, Vue Router, Socket.IO server+client, axios baseURL, service worker, express routing
+- No nginx `sub_filter` hacks required
+
+### CLI (Rust)
+
+- `dotenvy` — reads `cli/.env` for dev environment
+- `KENARI_CONFIG` env var — override config path
+- `colored` crate — replaces raw ANSI escape codes
+- `clap_complete` — shell completions
+- `rustls-tls` — static musl binaries, no OpenSSL
+
+### Documentation
+
+- `docs/DEPENDENCIES.md` — dependency strategy with tradeoffs
+- `docs/PORTING.md` — platform support (ESP32, STM32, RISC-V, BSD, mobile, ARM)
+- `docs/ETHICS.md` — open letter on responsible use and Indonesian law
+- AI context files updated (AGENTS.md, CLAUDE.md, GEMINI.md)
 
 ---
 
