@@ -24,7 +24,7 @@
 			{#if user}
 				<div class="flex items-center gap-0.5">
 					<a href="/" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Dashboard</a>
-					<a href="/agents" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/agents') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Agents</a>
+					<a href="/registry" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/registry') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Registry</a>
 					<a href="/status" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/status') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Status</a>
 					{#if user.role === 'admin'}
 						<a href="/console" class={`text-xs px-3 py-1.5 rounded-lg transition ${isActive('/console') ? 'text-white bg-white/8' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>Console</a>
@@ -116,7 +116,7 @@
 					</svg>
 					Dashboard
 				</a>
-				<a href="/agents" class={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition ${isActive('/agents') ? 'text-white' : 'text-white/30'}`}>
+				<a href="/registry" class={`flex-1 flex flex-col items-center gap-1 py-3 text-xs transition ${isActive('/registry') ? 'text-white' : 'text-white/30'}`}>
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.8">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2v-4M9 21H5a2 2 0 01-2-2v-4m0 0h18"/>
 					</svg>
