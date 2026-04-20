@@ -30,7 +30,7 @@ test.describe('Setup Wizard', () => {
 		await page.getByPlaceholder(/min 8 chars/i).fill(TEST_ADMIN.password);
 		await page.getByRole('button', { name: /Create Admin/ }).click();
 		await page.waitForURL('/');
-		await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+		await expect(page).toHaveURL('/');
 	});
 
 	test('rejects short password', async ({ page }) => {

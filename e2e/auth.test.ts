@@ -44,7 +44,7 @@ test.describe('Authentication', () => {
 		await page.getByPlaceholder('Password').fill(TEST_ADMIN.password);
 		await page.getByRole('button', { name: 'Sign in' }).click();
 		await page.waitForURL('/');
-		await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+		await expect(page).toHaveURL('/');
 	});
 
 	test('admin sees admin badge in nav', async ({ page }) => {

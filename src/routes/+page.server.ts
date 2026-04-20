@@ -1,6 +1,9 @@
 import { redirect } from '@sveltejs/kit';
 import { getAllRoutes } from '$lib/monitor.config';
 import { alertUpstreamDown, alertUpstreamUp } from '$lib/server/telegram';
+import { getDb } from '$lib/server/db';
+import { agents, agentMetrics, auditLog } from '$lib/server/db/schema';
+import { desc, gte } from 'drizzle-orm';
 import type { PageServerLoad } from './$types';
 
 // Cache health results — return immediately, refresh in background
@@ -54,5 +57,30 @@ export const load: PageServerLoad = async ({ locals }) => {
 		health[route.id] = healthCache[route.id] ?? { online: false, latency: 0 };
 	}
 
-	return { user: locals.user, routes: accessibleRoutes, health };
+	// Summary stats for dashboard widgets
+	const db = getDb();
+	const [allAgents, recentEvents] = await Promise.all([
+		db.select({ id: agents.id, lastSeen: agents.lastSeen }).from(agents),
+		db.select({ action: auditLog.action, createdAt: auditLog.createdAt })
+			.from(auditLog)
+			.where(gte(auditLog.createdAt, Date.now() - 86_400_000))
+			.orderBy(desc(auditLog.createdAt))
+			.limit(5)
+	]);
+
+	const onlineAgents = allAgents.filter(a => a.lastSeen && Date.now() - a.lastSeen < 90_000).length;
+	const servicesOnline = accessibleRoutes.filter(r => health[r.id]?.online).length;
+
+	return {
+		user: locals.user,
+		routes: accessibleRoutes,
+		health,
+		stats: {
+			agentsTotal: allAgents.length,
+			agentsOnline: onlineAgents,
+			servicesTotal: accessibleRoutes.length,
+			servicesOnline,
+			recentEvents
+		}
+	};
 };
