@@ -1,7 +1,7 @@
 import { json, error } from '@sveltejs/kit';
 import { dev } from '$app/environment';
 import { getDb } from '$lib/server/db';
-import { users, sessions, auditLog, failedLogins, agents, agentMetrics } from '$lib/server/db/schema';
+import { users, sessions, auditLog, failedLogins, agents, agentMetrics, blockedIps } from '$lib/server/db/schema';
 import type { RequestHandler } from './$types';
 
 // Only available in dev mode — SvelteKit tree-shakes this in production build
@@ -14,6 +14,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	if (action === 'reset') {
 		await db.delete(agentMetrics);
 		await db.delete(agents);
+		await db.delete(blockedIps);
 		await db.delete(auditLog);
 		await db.delete(failedLogins);
 		await db.delete(sessions);
