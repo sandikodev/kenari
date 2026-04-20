@@ -42,19 +42,56 @@ function getBuiltinRoutes(): MonitorRoute[] {
 	return routes;
 }
 
-// Custom routes from KENARI_ROUTES env var (JSON array)
-// Example:
-// KENARI_ROUTES='[{"id":"myapp","name":"My App","icon":"🚀","description":"My service","proxyPath":"/myapp","upstreamUrl":"http://myapp:8080"}]'
-function getCustomRoutes(): MonitorRoute[] {
+// Custom routes from KENARI_ROUTES env var (JSON array) — static config
+function getEnvRoutes(): MonitorRoute[] {
 	if (!env.KENARI_ROUTES) return [];
 	try {
 		return JSON.parse(env.KENARI_ROUTES) as MonitorRoute[];
 	} catch {
-		console.error('[kenari] Invalid KENARI_ROUTES JSON — skipping custom routes');
+		console.error('[kenari] Invalid KENARI_ROUTES JSON — skipping');
 		return [];
 	}
 }
 
+// Routes from DB (dynamic — managed via /console UI)
+// Called separately when DB is available
+export async function getDbRoutes(): Promise<MonitorRoute[]> {
+	try {
+		const { getDb } = await import('$lib/server/db');
+		const { services } = await import('$lib/server/db/schema');
+		const { eq } = await import('drizzle-orm');
+		const db = getDb();
+		const rows = await db.select().from(services).where(eq(services.enabled, 1));
+		return rows.map((s) => ({
+			id: s.id,
+			name: s.name,
+			icon: s.icon,
+			description: s.description ?? '',
+			proxyPath: s.proxyPath,
+			upstreamUrl: s.upstreamUrl,
+			authHeader: s.authHeaderKey && s.authHeaderValue
+				? { [s.authHeaderKey]: s.authHeaderValue }
+				: undefined,
+			allowedRoles: s.allowedRoles ? JSON.parse(s.allowedRoles) : undefined
+		}));
+	} catch {
+		return [];
+	}
+}
+
+// Sync version — env routes only (for use in non-async contexts)
 export function getRoutes(): MonitorRoute[] {
-	return [...getBuiltinRoutes(), ...getCustomRoutes()];
+	return [...getBuiltinRoutes(), ...getEnvRoutes()];
+}
+
+// Async version — env routes + DB routes
+export async function getAllRoutes(): Promise<MonitorRoute[]> {
+	const [envRoutes, dbRoutes] = await Promise.all([
+		Promise.resolve(getRoutes()),
+		getDbRoutes()
+	]);
+	// DB routes override env routes with same proxyPath
+	const envMap = new Map(envRoutes.map((r) => [r.proxyPath, r]));
+	for (const r of dbRoutes) envMap.set(r.proxyPath, r);
+	return Array.from(envMap.values());
 }

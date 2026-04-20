@@ -1,5 +1,5 @@
 import { redirect } from '@sveltejs/kit';
-import { getRoutes } from '$lib/monitor.config';
+import { getAllRoutes } from '$lib/monitor.config';
 import { alertUpstreamDown, alertUpstreamUp } from '$lib/server/telegram';
 import type { PageServerLoad } from './$types';
 
@@ -11,7 +11,7 @@ let checking = false;
 async function refreshHealth() {
 	if (checking) return;
 	checking = true;
-	const routes = getRoutes();
+	const routes = await getAllRoutes();
 	await Promise.all(
 		routes.map(async (route) => {
 			const start = Date.now();
@@ -35,7 +35,7 @@ async function refreshHealth() {
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) redirect(302, '/login');
 
-	const routes = getRoutes();
+	const routes = await getAllRoutes();
 	const userRole = (locals.user as unknown as { role: string }).role;
 	const accessibleRoutes = routes.filter(
 		(r) => !r.allowedRoles || r.allowedRoles.includes(userRole)

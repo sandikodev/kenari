@@ -25,7 +25,7 @@ export const auditLog = sqliteTable('audit_log', {
 	ip: text('ip'),
 	userAgent: text('user_agent'),
 	createdAt: integer('created_at').notNull(),
-	hash: text('hash') // SHA-256 of (content + prev_hash) for tamper detection
+	hash: text('hash')
 });
 
 export const failedLogins = sqliteTable('failed_logins', {
@@ -39,7 +39,7 @@ export const blockedIps = sqliteTable('blocked_ips', {
 	ip: text('ip').primaryKey(),
 	reason: text('reason').notNull(),
 	blockedAt: integer('blocked_at').notNull(),
-	expiresAt: integer('expires_at') // null = permanent
+	expiresAt: integer('expires_at')
 });
 
 export const agents = sqliteTable('agents', {
@@ -59,5 +59,20 @@ export const agentMetrics = sqliteTable('agent_metrics', {
 	diskUsedGb: real('disk_used_gb').notNull(),
 	diskTotalGb: real('disk_total_gb').notNull(),
 	uptimeSecs: integer('uptime_secs').notNull(),
+	createdAt: integer('created_at').notNull()
+});
+
+// Dynamic service registry — routes managed via UI, not env vars
+export const services = sqliteTable('services', {
+	id: text('id').primaryKey(),
+	name: text('name').notNull(),
+	icon: text('icon').notNull().default('🔗'),
+	description: text('description'),
+	proxyPath: text('proxy_path').notNull().unique(),
+	upstreamUrl: text('upstream_url').notNull(),
+	authHeaderKey: text('auth_header_key'),
+	authHeaderValue: text('auth_header_value'),
+	allowedRoles: text('allowed_roles'), // JSON array string e.g. '["admin","viewer"]'
+	enabled: integer('enabled').notNull().default(1),
 	createdAt: integer('created_at').notNull()
 });
