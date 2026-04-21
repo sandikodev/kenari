@@ -57,11 +57,11 @@ Agreed structure:
 
 ## kenari-cli (Rust)
 
-- [ ] **HIDS — file integrity monitoring** (`notify` crate, inotify/FSEvents)
+- [x] **HIDS — file integrity monitoring** (`notify` + `sha2` crates, `kenari hids baseline/check/watch`)
+- [x] **HIDS — log collection** (`kenari hids log` — tail any log file, push to gateway)
 - [ ] **HIDS — process monitoring** (new process detection, suspicious names)
-- [ ] **Log collection — nginx** (tail access log, parse error patterns)
-- [ ] **Log collection — PHP** (error log parsing, slow query)
-- [ ] **Log collection — Node/Bun** (process metrics via HTTP or IPC)
+- [ ] **Log parsing — nginx** (parse access log patterns, detect 4xx spikes)
+- [ ] **Log parsing — PHP** (error log parsing, slow query)
 - [ ] **PAM integration** — forward login events to gateway
 - [ ] **systemd journal** — forward journal entries to Loki
 

@@ -40,6 +40,11 @@ enum Commands {
         #[command(subcommand)]
         action: commands::agent::AgentAction,
     },
+    /// Host-based intrusion detection (file integrity, log collection)
+    Hids {
+        #[command(subcommand)]
+        action: commands::hids::HidsAction,
+    },
     /// Generate shell completion scripts
     Completions {
         /// Shell to generate completions for
@@ -63,6 +68,7 @@ async fn main() -> anyhow::Result<()> {
         Some(Commands::Status) => commands::status::run(),
         Some(Commands::Push) => commands::push::run().await,
         Some(Commands::Agent { action }) => commands::agent::run(action).await,
+        Some(Commands::Hids { action }) => commands::hids::run(action).await,
         Some(Commands::Completions { shell }) => {
             clap_complete::generate(shell, &mut Cli::command(), "kenari", &mut std::io::stdout());
             Ok(())
