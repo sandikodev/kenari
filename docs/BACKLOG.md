@@ -27,7 +27,7 @@ Agreed structure:
 - [x] **Migrate DB** — add `services` table to production DB
 - [x] **Update `db-migrate-prod.sh`** — add `services` table
 - [x] **Dynamic proxy routing** — `/proxy/<id>` handler for DB services
-- [ ] **Dashboard widgets** — summary: agent count, service health, recent alerts
+- [x] **Dashboard widgets** — summary: agent count, service health, recent activity (24h)
 - [ ] **Dashboard widgets** — make dashboard customizable:
   - Show/hide shortcuts per user preference
   - Add summary widgets: agent count, service health, recent alerts
