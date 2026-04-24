@@ -183,15 +183,19 @@ async fn watch(paths: Vec<String>) -> anyhow::Result<()> {
 }
 
 async fn tail_log(path: String, format: String) -> anyhow::Result<()> {
+    use crate::parsers::nginx;
+
     println!("\n🐦 {}", "Kenari HIDS — Log Tail".bold());
     let config = load_config()?;
     ui::ok(&format!("Tailing {} ({}) → {}", path, format, config.gateway));
     println!("  Press Ctrl+C to stop\n");
 
     let mut file = File::open(&path)?;
-    file.seek(SeekFrom::End(0))?; // start from end
+    file.seek(SeekFrom::End(0))?;
 
     let client = reqwest::Client::new();
+    let mut buffer: Vec<nginx::NginxLogEntry> = Vec::new();
+
     loop {
         let mut reader = BufReader::new(&file);
         let mut lines = Vec::new();
@@ -200,13 +204,37 @@ async fn tail_log(path: String, format: String) -> anyhow::Result<()> {
         while reader.read_line(&mut line)? > 0 {
             let trimmed = line.trim().to_string();
             if !trimmed.is_empty() {
-                println!("  {} {}", "→".dimmed(), trimmed);
-                lines.push(trimmed.clone());
+                if format == "nginx" {
+                    if let Some(entry) = nginx::parse_line(&trimmed) {
+                        // Alert on attack patterns immediately
+                        for pattern in &["/.env", "/wp-admin", "/.git", "/phpmyadmin"] {
+                            if entry.path.contains(pattern) {
+                                println!("  {} ATTACK PATTERN: {} {} from {}", "🚨".red(), entry.method, entry.path, entry.ip);
+                            }
+                        }
+                        if entry.status >= 500 {
+                            println!("  {} 5xx: {} {} → {}", "⚠".yellow(), entry.method, entry.path, entry.status);
+                        }
+                        buffer.push(entry);
+                    }
+                } else {
+                    println!("  {} {}", "→".dimmed(), trimmed);
+                    lines.push(trimmed.clone());
+                }
             }
             line.clear();
         }
 
-        if !lines.is_empty() {
+        // Push stats every 60 entries or on raw lines
+        if buffer.len() >= 60 || (!lines.is_empty() && format != "nginx") {
+            let stats = if format == "nginx" {
+                let s = nginx::analyze(&buffer);
+                buffer.clear();
+                serde_json::to_value(s).ok()
+            } else {
+                None
+            };
+
             let _ = client.post(format!("{}/api/agent/push", config.gateway))
                 .bearer_auth(&config.token)
                 .json(&serde_json::json!({
@@ -218,7 +246,7 @@ async fn tail_log(path: String, format: String) -> anyhow::Result<()> {
                         "cpu_percent": 0, "memory_used_mb": 0, "memory_total_mb": 1,
                         "disk_used_gb": 0, "disk_total_gb": 1, "uptime_secs": 0
                     },
-                    "logs": lines.iter().map(|l| serde_json::json!({"source": path, "format": format, "line": l})).collect::<Vec<_>>()
+                    "logs": if format == "nginx" { stats } else { Some(serde_json::json!(lines)) }
                 }))
                 .send().await;
         }

@@ -5,6 +5,7 @@ mod commands;
 mod config;
 mod init;
 mod metrics;
+mod parsers;
 mod ui;
 
 #[derive(Parser)]
